@@ -71,8 +71,8 @@ export default function Search() {
         </View>
 
         {/* Results header */}
-        <View className="flex-row items-baseline justify-between px-4 pb-2 pt-3">
-          <View className="flex-row items-baseline gap-2">
+        <View className="flex-row items-end justify-between px-4 pb-2 pt-3">
+          <View className="flex-row items-end gap-2">
             <Text className="font-display text-[28px] leading-[24px] tracking-tight text-cy-ink">
               {String(resultsCount).padStart(2, '0')}
             </Text>

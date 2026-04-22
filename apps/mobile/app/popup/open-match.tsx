@@ -21,7 +21,14 @@ export default function OpenMatchPopup() {
       {/* Overlay oscuro: tap para cerrar */}
       <Pressable
         onPress={close}
-        style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(13,13,13,0.55)' }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(13,13,13,0.55)',
+        }}
       />
 
       {/* Notification bar top */}
@@ -108,7 +115,7 @@ export default function OpenMatchPopup() {
               <Button
                 variant="accent"
                 onPress={close}
-                className="flex-[2]"
+                style={{ flex: 2 }}
                 rightIcon={<Icon name="arrow" size={14} color="#0d0d0d" />}
               >
                 Me sumo

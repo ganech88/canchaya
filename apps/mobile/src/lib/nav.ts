@@ -10,5 +10,6 @@ const BOTTOM_NAV_ROUTES: Record<BottomNavKey, Href> = {
 }
 
 export function navigateBottomNav(key: BottomNavKey) {
-  router.navigate(BOTTOM_NAV_ROUTES[key])
+  // `key` siempre existe en el Record, pero `noUncheckedIndexedAccess` tipa el acceso como posible undefined.
+  router.navigate(BOTTOM_NAV_ROUTES[key]!)
 }

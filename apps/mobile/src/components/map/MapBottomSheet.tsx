@@ -25,7 +25,7 @@ export function MapBottomSheet({ court, hour = '20:30', onPressDetail }: Props) 
           <Placeholder variant={court.color} className="h-[84px] w-[84px]" label="IMG" />
 
           <View className="flex-1">
-            <View className="flex-row items-baseline justify-between">
+            <View className="flex-row items-end justify-between">
               <Text
                 className="shrink font-display text-[18px] leading-[16px] tracking-tight text-cy-ink"
                 numberOfLines={1}

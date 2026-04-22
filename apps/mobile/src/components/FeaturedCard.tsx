@@ -28,7 +28,7 @@ export function FeaturedCard({ court, onPress }: Props) {
       </View>
 
       <View className="px-3.5 py-3">
-        <View className="flex-row items-baseline justify-between gap-2">
+        <View className="flex-row items-end justify-between gap-2">
           <Text
             className="font-display text-[22px] leading-[20px] tracking-tight text-cy-ink"
             numberOfLines={1}

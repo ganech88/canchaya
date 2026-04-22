@@ -89,7 +89,7 @@ export default function CourtDetail() {
 
         {/* Calendar */}
         <View className="px-4 pt-3.5">
-          <View className="mb-2.5 flex-row items-baseline justify-between">
+          <View className="mb-2.5 flex-row items-end justify-between">
             <Text className="font-condensed text-[22px] leading-[21px] uppercase text-cy-ink">
               Turnos · Mié {DAYS[dayIndex]?.number}
             </Text>

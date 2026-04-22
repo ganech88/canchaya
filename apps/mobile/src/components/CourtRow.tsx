@@ -18,7 +18,7 @@ export function CourtRow({ court, onPress, showBorder = true }: Props) {
         <Placeholder variant={court.color} className="h-[68px] w-[68px]" label="IMG" />
 
         <View className="min-w-0 flex-1">
-          <View className="flex-row items-baseline justify-between gap-1.5">
+          <View className="flex-row items-end justify-between gap-1.5">
             <Text
               className="shrink font-display text-[15px] leading-[14px] tracking-tight text-cy-ink"
               numberOfLines={1}
@@ -32,7 +32,7 @@ export function CourtRow({ court, onPress, showBorder = true }: Props) {
 
           <View className="mt-1.5 flex-row items-center justify-between">
             <CourtType type={court.type} />
-            <View className="flex-row items-baseline">
+            <View className="flex-row items-end">
               <Text className="font-display text-[14px] leading-[12px] tracking-tight text-cy-ink">
                 {formatPriceK(court.price)}
               </Text>

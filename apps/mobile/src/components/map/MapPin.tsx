@@ -28,6 +28,7 @@ function formatK(v: number): string {
 export function MapPin({ left, top, priceK, variant = 'default' }: Props) {
   return (
     <View
+      pointerEvents="none"
       style={{
         position: 'absolute',
         left: `${left}%`,
@@ -35,7 +36,6 @@ export function MapPin({ left, top, priceK, variant = 'default' }: Props) {
         // Ancla: centro-horizontal, borde inferior coincide con la punta del pin.
         transform: [{ translateX: -24 }, { translateY: -32 }],
       }}
-      pointerEvents="none"
     >
       <View className={cn('border-card border-cy-line px-2 py-1', variantClass[variant])}>
         <Text className="font-display text-[14px] leading-[12px] tracking-tight text-cy-ink">

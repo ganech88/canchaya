@@ -13,7 +13,7 @@ export function ReachCard({ count, radiusKm = 3 }: Props) {
       <Text className="font-mono text-[10px] font-bold uppercase text-cy-ink">
         Alcance estimado
       </Text>
-      <View className="mt-1 flex-row items-baseline gap-2.5">
+      <View className="mt-1 flex-row items-end gap-2.5">
         <Text className="font-display text-[34px] leading-[30px] tracking-tight text-cy-ink">
           {count}
         </Text>

@@ -18,7 +18,7 @@ export function SportBreakdown({ rows }: Props) {
           key={r.sport}
           className={i < rows.length - 1 ? 'border-b border-cy-line' : undefined}
         >
-          <View className="flex-row items-baseline justify-between py-2">
+          <View className="flex-row items-end justify-between py-2">
             <Text className="font-condensed text-[18px] uppercase text-cy-ink">{r.sport}</Text>
             <Text className="font-mono text-[11px] text-cy-ink">
               {r.matches} partidos · {r.pct}%

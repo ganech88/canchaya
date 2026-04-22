@@ -5,12 +5,13 @@
     "lib": ["ES2022", "DOM"],
     "types": ["react"],
     "noEmit": true,
+    "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@canchaya/ui": ["./src/index.ts"],
       "@canchaya/ui/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "nativewind-env.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

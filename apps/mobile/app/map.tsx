@@ -43,7 +43,7 @@ export default function Map() {
           height="100%"
           viewBox="0 0 400 600"
           preserveAspectRatio="none"
-          style={{ position: 'absolute', inset: 0, opacity: 0.18 }}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.18 }}
         >
           {/* "Calles" */}
           <Path d="M-20 180 Q 180 140 450 260" stroke="#fff" strokeWidth="6" fill="none" />

@@ -82,7 +82,7 @@ export default function OpenMatchNew() {
           <Text className="mb-1.5 font-mono text-[10px] font-bold uppercase text-cy-ink">
             Aporte / jugador
           </Text>
-          <View className="flex-row items-baseline justify-between border-card border-cy-line bg-cy-paper px-3 py-2.5">
+          <View className="flex-row items-end justify-between border-card border-cy-line bg-cy-paper px-3 py-2.5">
             <Text className="font-display text-[26px] leading-[22px] tracking-tight text-cy-ink">
               ${contribution.toLocaleString('es-AR')}
             </Text>

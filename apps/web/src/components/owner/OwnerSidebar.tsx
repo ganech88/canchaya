@@ -48,7 +48,8 @@ export function OwnerSidebar() {
           return (
             <Link
               key={item.num}
-              href={item.href}
+              // typedRoutes de Next 15 exige el tipo `Route`; NAV usa string porque los paths los armamos en runtime.
+              href={item.href as never}
               className={cn(
                 'flex items-center gap-2.5 border-l-[4px] px-4 py-2.5 transition-colors',
                 active
