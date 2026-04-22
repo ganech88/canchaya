@@ -1,6 +1,16 @@
 import '../global.css'
 import { Stack } from 'expo-router'
 import { useFonts } from 'expo-font'
+import { ArchivoBlack_400Regular } from '@expo-google-fonts/archivo-black'
+import { BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue'
+import {
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_700Bold,
+} from '@expo-google-fonts/space-grotesk'
+import {
+  JetBrainsMono_400Regular,
+  JetBrainsMono_700Bold,
+} from '@expo-google-fonts/jetbrains-mono'
 import { useEffect } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
@@ -9,14 +19,20 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 SplashScreen.preventAutoHideAsync().catch(() => {})
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
-    // TODO: bajar los .ttf oficiales a assets/fonts/ y referenciarlos acá.
-    // Por ahora NativeWind resuelve vía font-family del sistema + fallbacks.
+  const [loaded, error] = useFonts({
+    ArchivoBlack: ArchivoBlack_400Regular,
+    BebasNeue: BebasNeue_400Regular,
+    SpaceGrotesk: SpaceGrotesk_400Regular,
+    SpaceGroteskBold: SpaceGrotesk_700Bold,
+    JetBrainsMono: JetBrainsMono_400Regular,
+    JetBrainsMonoBold: JetBrainsMono_700Bold,
   })
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync().catch(() => {})
-  }, [loaded])
+    if (loaded || error) SplashScreen.hideAsync().catch(() => {})
+  }, [loaded, error])
+
+  if (!loaded && !error) return null
 
   return (
     <SafeAreaProvider>

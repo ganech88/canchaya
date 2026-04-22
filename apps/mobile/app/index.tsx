@@ -1,51 +1,95 @@
-// Placeholder de Home — lo reemplazamos por ScreenHome del handoff cuando arranquemos pantalla por pantalla.
+// ScreenHome — portada estilo revista deportiva.
+// Orden vertical: Masthead → Hero → Search → CategoryRail → FeaturedCard →
+// OpenMatchPromo → Nearby list → BottomNav.
 
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useState } from 'react'
 import { View, Text, ScrollView } from 'react-native'
-import { Masthead, Chip, Button, Placeholder } from '@canchaya/ui/native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Masthead, BottomNav, type BottomNavKey } from '@canchaya/ui/native'
 import { Icon } from '@/lib/icon'
+import { MOCK_COURTS } from '@/data/courts'
+import { FeaturedCard } from '@/components/FeaturedCard'
+import { CourtRow } from '@/components/CourtRow'
+import { SearchBar } from '@/components/SearchBar'
+import { CategoryRail, CATEGORY_LIST, type Category } from '@/components/CategoryRail'
+import { OpenMatchPromo } from '@/components/OpenMatchPromo'
 
 export default function Home() {
-  return (
-    <SafeAreaView className="flex-1 bg-cy-bg" edges={['top']}>
-      <Masthead
-        dateStr="ABR·22·2026"
-        issue="ED. MATUTINA"
-        section="HOY · PALERMO"
-        title="JUGÁ CERCA."
-        sub="12 canchas disponibles en los próximos 90 minutos a menos de 3 km."
-      />
+  const [activeNav, setActiveNav] = useState<BottomNavKey>('home')
+  const [category, setCategory] = useState<Category>(CATEGORY_LIST[0])
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 16 }}>
-        <View className="flex-row flex-wrap gap-2">
-          {['TODO', 'FÚTBOL 5', 'FÚTBOL 8', 'PÁDEL', 'TENIS'].map((label, i) => (
-            <Chip key={label} variant={i === 0 ? 'fill' : 'outline'}>
-              {label}
-            </Chip>
-          ))}
+  const featured = MOCK_COURTS[0]
+  const nearby = MOCK_COURTS.slice(1)
+
+  if (!featured) return null
+
+  return (
+    <SafeAreaView className="flex-1 bg-cy-bg" edges={['top', 'bottom']}>
+      <Masthead dateStr="ABR·22·2026" issue="ED. MATUTINA" />
+
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero title */}
+        <View className="px-4 pb-2.5 pt-4">
+          <Text className="mb-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-cy-red">
+            § HOY · PALERMO
+          </Text>
+          <Text className="font-display text-[54px] leading-[47px] tracking-tight text-cy-ink">
+            JUGÁ{'\n'}CERCA.
+          </Text>
+          <Text className="mt-1.5 max-w-[280px] font-ui text-[13px] text-cy-muted">
+            12 canchas disponibles en los próximos 90 minutos a menos de 3 km.
+          </Text>
         </View>
 
-        <Placeholder variant="field" style={{ height: 160 }} label="CANCHA · PHOTO" />
+        {/* Search */}
+        <View className="px-4 pb-3.5 pt-1.5">
+          <SearchBar />
+        </View>
 
-        <View className="border-card border-cy-line bg-cy-paper p-4">
-          <Text className="font-mono text-[10px] font-bold uppercase tracking-widest text-cy-red">
-            § SETUP OK
-          </Text>
-          <Text className="mt-2 font-display text-[28px] leading-[26px] text-cy-ink">
-            MONOREPO LISTO.
-          </Text>
-          <Text className="mt-2 text-[13px] text-cy-muted">
-            Tokens, primitives y Supabase client ya configurados. Vamos screen por screen desde el handoff.
-          </Text>
-          <View className="mt-4 flex-row gap-2">
-            <Button variant="accent">
-              <Icon name="bolt" size={14} color="#0d0d0d" />
-              {'  '}EMPEZAR
-            </Button>
-            <Button variant="ghost">VER DOCS</Button>
+        {/* Category rail */}
+        <View className="pb-3 pl-4">
+          <CategoryRail active={category} onChange={setCategory} />
+        </View>
+
+        {/* Featured card */}
+        <View className="px-4 pb-3.5">
+          <FeaturedCard court={featured} />
+        </View>
+
+        {/* Open match promo */}
+        <View className="px-4 pb-3.5">
+          <OpenMatchPromo />
+        </View>
+
+        {/* Nearby list */}
+        <View className="px-4">
+          <View className="mb-2.5 flex-row items-baseline justify-between">
+            <Text className="font-condensed text-[22px] leading-[21px] uppercase text-cy-ink">
+              Cerca tuyo
+            </Text>
+            <View className="flex-row items-center gap-1">
+              <Text className="font-mono text-[10px] uppercase text-cy-muted">Ver mapa</Text>
+              <Icon name="arrow" size={12} color="#6b6557" />
+            </View>
+          </View>
+          <View className="h-1 bg-cy-line" />
+          <View>
+            {nearby.map((court, i) => (
+              <CourtRow
+                key={court.id}
+                court={court}
+                showBorder={i < nearby.length - 1}
+              />
+            ))}
           </View>
         </View>
       </ScrollView>
+
+      <BottomNav active={activeNav} onPress={setActiveNav} IconComponent={Icon} />
     </SafeAreaView>
   )
 }
