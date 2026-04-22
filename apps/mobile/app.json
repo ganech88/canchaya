@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "CanchaYa",
+    "slug": "canchaya",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "canchaya",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f2ede1"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.canchaya.app"
+    },
+    "android": {
+      "package": "com.canchaya.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#c6ff1a"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

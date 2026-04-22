@@ -1,0 +1,88 @@
+/* CanchaYa — Editorial deportivo */
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  --cy-bg: #f2ede1;
+  --cy-paper: #faf6ea;
+  --cy-ink: #0d0d0d;
+  --cy-ink-2: #2a2a2a;
+  --cy-muted: #6b6557;
+  --cy-line: #0d0d0d;
+  --cy-accent: #c6ff1a;       /* lima eléctrico */
+  --cy-accent-2: #e8ff5e;
+  --cy-red: #ff3b1f;           /* titulares */
+  --cy-field: #0a3d1f;         /* verde cancha */
+  --cy-field-2: #0e5128;
+  --cy-sand: #e6dfcd;
+  --cy-dark: #0b0b0b;
+  --cy-display: 'Archivo Black', 'Bebas Neue', Impact, sans-serif;
+  --cy-condensed: 'Bebas Neue', Impact, sans-serif;
+  --cy-ui: 'Space Grotesk', system-ui, sans-serif;
+  --cy-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.cy-dark {
+  --cy-bg: #0b0b0b;
+  --cy-paper: #141414;
+  --cy-ink: #faf6ea;
+  --cy-ink-2: #d8d3c4;
+  --cy-muted: #8a8473;
+  --cy-line: #faf6ea;
+  --cy-sand: #1d1d1d;
+}
+
+/* Reusable editorial components */
+.cy-root { font-family: var(--cy-ui); color: var(--cy-ink); background: var(--cy-bg); -webkit-font-smoothing:antialiased; }
+.cy-display { font-family: var(--cy-display); font-weight: 900; letter-spacing: -0.02em; line-height: 0.9; text-transform: uppercase; }
+.cy-cond { font-family: var(--cy-condensed); text-transform: uppercase; letter-spacing: 0.01em; line-height: 0.95; }
+.cy-mono { font-family: var(--cy-mono); }
+.cy-rule { border: 0; border-top: 2px solid var(--cy-line); }
+.cy-rule-thick { border: 0; border-top: 4px solid var(--cy-line); }
+.cy-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1.5px solid var(--cy-line); padding: 4px 10px;
+  font-family: var(--cy-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  background: transparent;
+}
+.cy-chip-fill { background: var(--cy-ink); color: var(--cy-bg); }
+.cy-chip-accent { background: var(--cy-accent); border-color: var(--cy-ink); color: var(--cy-ink); }
+.cy-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--cy-ui); font-weight: 700; font-size: 14px;
+  padding: 14px 18px; border: 2px solid var(--cy-line); cursor: pointer;
+  background: var(--cy-ink); color: var(--cy-bg); text-transform: uppercase; letter-spacing: 0.04em;
+}
+.cy-btn-accent { background: var(--cy-accent); color: var(--cy-ink); }
+.cy-btn-ghost { background: transparent; color: var(--cy-ink); }
+.cy-stamp {
+  display: inline-block; font-family: var(--cy-mono); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; padding: 2px 6px; border: 1.5px dashed var(--cy-line);
+}
+.cy-no-scroll::-webkit-scrollbar { display: none; }
+.cy-no-scroll { scrollbar-width: none; }
+
+/* diagonal striped placeholder for imagery */
+.cy-img-placeholder {
+  background-color: var(--cy-sand);
+  background-image: repeating-linear-gradient(45deg,
+    transparent 0 14px,
+    rgba(13,13,13,0.06) 14px 15px);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--cy-muted); font-family: var(--cy-mono); font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  border: 1.5px solid var(--cy-line);
+  position: relative; overflow: hidden;
+}
+.cy-img-placeholder.accent { background-color: var(--cy-accent); color: var(--cy-ink); }
+.cy-img-placeholder.field {
+  background: var(--cy-field);
+  color: var(--cy-accent);
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.08) 0 1px, transparent 1px 40px);
+  border-color: var(--cy-field-2);
+}
+.cy-img-placeholder.dark { background: var(--cy-dark); color: var(--cy-accent); border-color: var(--cy-dark); }
+
+/* number ticker */
+.cy-big-num { font-family: var(--cy-display); font-size: 84px; line-height: 0.85; letter-spacing: -0.04em; }

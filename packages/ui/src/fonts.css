@@ -1,0 +1,29 @@
+/* CanchaYa — font imports (Google Fonts) */
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  --cy-bg: #f2ede1;
+  --cy-paper: #faf6ea;
+  --cy-ink: #0d0d0d;
+  --cy-ink-2: #2a2a2a;
+  --cy-muted: #6b6557;
+  --cy-line: #0d0d0d;
+  --cy-accent: #c6ff1a;
+  --cy-accent-2: #e8ff5e;
+  --cy-red: #ff3b1f;
+  --cy-field: #0a3d1f;
+  --cy-field-2: #0e5128;
+  --cy-sand: #e6dfcd;
+  --cy-dark: #0b0b0b;
+}
+
+.cy-dark,
+[data-theme='dark'] {
+  --cy-bg: #0b0b0b;
+  --cy-paper: #141414;
+  --cy-ink: #faf6ea;
+  --cy-ink-2: #d8d3c4;
+  --cy-muted: #8a8473;
+  --cy-line: #faf6ea;
+  --cy-sand: #1d1d1d;
+}

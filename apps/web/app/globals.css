@@ -1,0 +1,15 @@
+@import '@canchaya/ui/fonts.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    background: var(--cy-bg);
+    color: var(--cy-ink);
+    font-family: var(--cy-ui), 'Space Grotesk', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}

@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<title>CanchaYa — App de reserva de canchas</title>
+<meta name="viewport" content="width=1400"/>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #f2ede1; }
+  /* Tweaks panel */
+  #tweaks {
+    position: fixed; bottom: 16px; right: 16px; width: 280px;
+    background: #faf6ea; border: 2px solid #0d0d0d; z-index: 200;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    display: none;
+    box-shadow: 0 8px 30px rgba(0,0,0,.25);
+  }
+  #tweaks.open { display: block; }
+  #tweaks header { padding: 10px 14px; background: #0d0d0d; color: #c6ff1a; display: flex; justify-content: space-between; align-items: center; }
+  #tweaks header .t { font-family: 'Archivo Black'; font-size: 16px; letter-spacing: -.02em; }
+  #tweaks .row { padding: 10px 14px; border-bottom: 1px solid #0d0d0d; }
+  #tweaks .row:last-child { border-bottom: 0; }
+  #tweaks .lbl { font-family: 'JetBrains Mono'; font-size: 9px; letter-spacing: .14em; font-weight: 700; margin-bottom: 6px; color: #6b6557; }
+  #tweaks .opts { display: flex; flex-wrap: wrap; gap: 4px; }
+  #tweaks .opt { font-family: 'JetBrains Mono'; font-size: 10px; padding: 4px 8px; border: 1.5px solid #0d0d0d; cursor: pointer; text-transform: uppercase; letter-spacing: .08em; }
+  #tweaks .opt.on { background: #c6ff1a; color: #0d0d0d; }
+  #tweaks .opt.off { background: #faf6ea; color: #0d0d0d; }
+  .cy-dark #tweaks { background: #141414; color: #faf6ea; border-color: #faf6ea; }
+  .cy-dark #tweaks header { background: #c6ff1a; color: #0d0d0d; }
+  .cy-dark #tweaks .opt { border-color: #faf6ea; color: #faf6ea; background: transparent; }
+  .cy-dark #tweaks .opt.on { background: #c6ff1a; color: #0d0d0d; }
+  .cy-dark #tweaks .lbl { color: #8a8473; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<div id="tweaks-mount"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="android-frame.jsx"></script>
+<script type="text/babel" src="browser-window.jsx"></script>
+<script type="text/babel" src="components-shared.jsx"></script>
+<script type="text/babel" src="user-screens.jsx"></script>
+<script type="text/babel" src="owner-screens.jsx"></script>
+
+<script type="text/babel">
+const TWEAKS = /*EDITMODE-BEGIN*/{
+  "accent": "lime",
+  "theme": "light",
+  "density": "normal",
+  "font": "mono",
+  "layout": "full"
+}/*EDITMODE-END*/;
+
+const ACCENTS = {
+  lime:    { a: '#c6ff1a', a2: '#e8ff5e', red: '#ff3b1f' },
+  orange:  { a: '#ff7a1a', a2: '#ffa866', red: '#1a3dff' },
+  cyan:    { a: '#4ff1e0', a2: '#9df8ee', red: '#ff3b1f' },
+  magenta: { a: '#ff4fcf', a2: '#ff9fe0', red: '#0d0d0d' },
+};
+
+const FONTS = {
+  'space-grotesk': { display: "'Archivo Black', Impact, sans-serif", ui: "'Space Grotesk', system-ui, sans-serif" },
+  'bebas':         { display: "'Bebas Neue', Impact, sans-serif", ui: "'Space Grotesk', system-ui, sans-serif" },
+  'mono':          { display: "'Archivo Black', Impact, sans-serif", ui: "'JetBrains Mono', monospace" },
+};
+
+function applyTweaks(t) {
+  const root = document.documentElement;
+  const a = ACCENTS[t.accent] || ACCENTS.lime;
+  root.style.setProperty('--cy-accent', a.a);
+  root.style.setProperty('--cy-accent-2', a.a2);
+  root.style.setProperty('--cy-red', a.red);
+  const f = FONTS[t.font] || FONTS['space-grotesk'];
+  root.style.setProperty('--cy-display', f.display);
+  root.style.setProperty('--cy-ui', f.ui);
+  document.body.classList.toggle('cy-dark', t.theme === 'dark');
+}
+
+function Tweaks({ state, setState, visible, onClose }) {
+  const opt = (key, val, label) => (
+    <span key={val} className={'opt ' + (state[key] === val ? 'on' : 'off')}
+      onClick={() => setState({ ...state, [key]: val })}>{label}</span>
+  );
+  return (
+    <div id="tweaks" className={visible ? 'open' : ''}>
+      <header>
+        <div className="t">TWEAKS</div>
+        <div style={{ cursor: 'pointer', fontSize: 16, lineHeight: 1 }} onClick={onClose}>×</div>
+      </header>
+      <div className="row">
+        <div className="lbl">COLOR PRINCIPAL</div>
+        <div className="opts">
+          {opt('accent','lime','Lima')}
+          {opt('accent','orange','Naranja')}
+          {opt('accent','cyan','Cyan')}
+          {opt('accent','magenta','Magenta')}
+        </div>
+      </div>
+      <div className="row">
+        <div className="lbl">TEMA</div>
+        <div className="opts">
+          {opt('theme','light','Claro')}
+          {opt('theme','dark','Oscuro')}
+        </div>
+      </div>
+      <div className="row">
+        <div className="lbl">TIPOGRAFÍA DISPLAY</div>
+        <div className="opts">
+          {opt('font','space-grotesk','Archivo')}
+          {opt('font','bebas','Bebas')}
+          {opt('font','mono','Mixto')}
+        </div>
+      </div>
+      <div className="row">
+        <div className="lbl">DENSIDAD</div>
+        <div className="opts">
+          {opt('density','normal','Normal')}
+          {opt('density','compact','Compacta')}
+        </div>
+      </div>
+      <div className="row">
+        <div className="lbl">LAYOUT DASHBOARD</div>
+        <div className="opts">
+          {opt('layout','full','Full')}
+          {opt('layout','focus','Focus')}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [t, setT] = React.useState(TWEAKS);
+  const [tweaksVisible, setTV] = React.useState(false);
+
+  React.useEffect(() => applyTweaks(t), [t]);
+
+  React.useEffect(() => {
+    const h = (e) => {
+      if (!e.data) return;
+      if (e.data.type === '__activate_edit_mode') setTV(true);
+      if (e.data.type === '__deactivate_edit_mode') setTV(false);
+    };
+    window.addEventListener('message', h);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', h);
+  }, []);
+
+  const updateT = (next) => {
+    setT(next);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: next }, '*');
+  };
+
+  // Android device dims
+  const W = 360, H = 740;
+  // Desktop dashboard dims
+  const DW = 1280, DH = 820;
+
+  return (
+    <>
+      <DesignCanvas>
+        <DCSection id="intro" title="CanchaYa" subtitle="Reserva de canchas · Editorial sports · Prototipo clickeable">
+          <DCArtboard id="cover" label="00 · Portada" width={520} height={740}>
+            <Cover/>
+          </DCArtboard>
+          <DCArtboard id="system" label="01 · Sistema visual" width={520} height={740}>
+            <SystemBoard/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="user" title="Usuario · Android" subtitle="Flujo de reserva y descubrimiento · 8 pantallas">
+          <DCArtboard id="u1" label="A · Home" width={W+16} height={H+16}>
+            <AndroidDevice width={W} height={H} dark={t.theme==='dark'}><ScreenHome/></AndroidDevice>
+          </DCArtboard>
+          <DCArtboard id="u2" label="B · Búsqueda + filtros" width={W+16} height={H+16}>
+            <AndroidDevice width={W} height={H} dark={t.theme==='dark'}><ScreenSearch/></AndroidDevice>
+          </DCArtboard>
+          <DCArtboard id="u3" label="C · Mapa" width={W+16} height={H+16}>
+            <AndroidDevice width={W} height={H} dark={t.theme==='dark'}><ScreenMap/></AndroidDevice>
+          </DCArtboard>
+          <DCArtboard id="u4" label="D · Detalle + calendario" width={W+16} height={H+16}>
+            <AndroidDevice width={W} height={H} dark={t.theme==='dark'}><ScreenDetail/></AndroidDevice>
+          </DCArtboard>
+          <DCArtboard id="u5" label="E · Partido abierto" width={W+16} height={H+16}>
+            <AndroidDevice width={W} height={H} dark={t.theme==='dark'}><ScreenOpenMatch/></AndroidDevice>
+          </DCArtboard>
+          <DCArtboard id="u6" label="F · Popup · ¿te sumás?" width={W+16} height={H+16}>
+            <AndroidDevice width={W} height={H} dark={t.theme==='dark'}><ScreenPopup/></AndroidDevice>
+          </DCArtboard>
+          <DCArtboard id="u7" label="G · Perfil" width={W+16} height={H+16}>
+            <AndroidDevice width={W} height={H} dark={t.theme==='dark'}><ScreenProfile/></AndroidDevice>
+          </DCArtboard>
+          <DCArtboard id="u8" label="H · Chat del partido" width={W+16} height={H+16}>
+            <AndroidDevice width={W} height={H} dark={t.theme==='dark'}><ScreenChat/></AndroidDevice>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="owner" title="Dueño · Dashboard web" subtitle="Gestión del complejo · 6 pantallas">
+          <DCArtboard id="o1" label="01 · Dashboard general" width={DW} height={DH}>
+            <ChromeWindow width={DW} height={DH} tabs={[{title:'CanchaYa · Ops'}]} url="ops.canchaya.com/dashboard">
+              <OwnerDashboard/>
+            </ChromeWindow>
+          </DCArtboard>
+          <DCArtboard id="o2" label="02 · Calendario semanal" width={DW} height={DH}>
+            <ChromeWindow width={DW} height={DH} tabs={[{title:'CanchaYa · Ops'}]} url="ops.canchaya.com/calendar">
+              <OwnerCalendar/>
+            </ChromeWindow>
+          </DCArtboard>
+          <DCArtboard id="o3" label="03 · Gestión de canchas" width={DW} height={DH}>
+            <ChromeWindow width={DW} height={DH} tabs={[{title:'CanchaYa · Ops'}]} url="ops.canchaya.com/courts">
+              <OwnerCourts/>
+            </ChromeWindow>
+          </DCArtboard>
+          <DCArtboard id="o4" label="04 · Detalle de reserva" width={DW} height={DH}>
+            <ChromeWindow width={DW} height={DH} tabs={[{title:'CanchaYa · Ops'}]} url="ops.canchaya.com/bookings/248">
+              <OwnerBookingDetail/>
+            </ChromeWindow>
+          </DCArtboard>
+          <DCArtboard id="o5" label="05 · Analytics bebidas" width={DW} height={DH}>
+            <ChromeWindow width={DW} height={DH} tabs={[{title:'CanchaYa · Ops'}]} url="ops.canchaya.com/analytics/drinks">
+              <OwnerDrinks/>
+            </ChromeWindow>
+          </DCArtboard>
+          <DCArtboard id="o6" label="06 · Configuración" width={DW} height={DH}>
+            <ChromeWindow width={DW} height={DH} tabs={[{title:'CanchaYa · Ops'}]} url="ops.canchaya.com/settings">
+              <OwnerSettings/>
+            </ChromeWindow>
+          </DCArtboard>
+        </DCSection>
+
+        <DCPostIt top={96} left={64} rotate={-3} width={220}>
+          Hola! 👋 Este es el primer pase. Arrastrá los artboards para reordenar, o hacé click para enfocar uno.
+        </DCPostIt>
+        <DCPostIt top={720} right={64} rotate={2} width={220}>
+          Activá "Tweaks" en la toolbar para cambiar color, tema, tipografía y densidad.
+        </DCPostIt>
+      </DesignCanvas>
+
+      {ReactDOM.createPortal(
+        <Tweaks state={t} setState={updateT} visible={tweaksVisible} onClose={() => setTV(false)}/>,
+        document.getElementById('tweaks-mount')
+      )}
+    </>
+  );
+}
+
+// ─── Portada + Sistema visual ─────────────────────
+function Cover() {
+  return (
+    <div className="cy-root" style={{ height: '100%', background: 'var(--cy-paper)', padding: 30, display: 'flex', flexDirection: 'column', border: '2px solid var(--cy-line)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid var(--cy-line)', paddingBottom: 8 }}>
+        <span className="cy-mono" style={{ fontSize: 10, letterSpacing: '.2em', fontWeight: 700 }}>CANCHAYA · N°001</span>
+        <span className="cy-mono" style={{ fontSize: 10, letterSpacing: '.2em', color: 'var(--cy-red)', fontWeight: 700 }}>MAR · 2026</span>
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div className="cy-mono" style={{ fontSize: 11, letterSpacing: '.2em', color: 'var(--cy-red)', fontWeight: 700 }}>§ PROTOTIPO · V1</div>
+        <div className="cy-display" style={{ fontSize: 110, marginTop: 4 }}>CANCHA<br/>YA.</div>
+        <div style={{ fontSize: 15, color: 'var(--cy-muted)', marginTop: 16, maxWidth: 380, lineHeight: 1.4 }}>
+          Marketplace de canchas · Estética editorial sports magazine · 2 plataformas: app Android para jugadores + dashboard web para dueños.
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', border: '2px solid var(--cy-line)', background: 'var(--cy-bg)' }}>
+        <div style={{ padding: 14, borderRight: '1.5px solid var(--cy-line)' }}>
+          <div className="cy-mono" style={{ fontSize: 9 }}>PANTALLAS</div>
+          <div className="cy-display" style={{ fontSize: 40 }}>14</div>
+        </div>
+        <div style={{ padding: 14, borderRight: '1.5px solid var(--cy-line)', background: 'var(--cy-accent)' }}>
+          <div className="cy-mono" style={{ fontSize: 9 }}>PLATAFORMAS</div>
+          <div className="cy-display" style={{ fontSize: 40 }}>02</div>
+        </div>
+        <div style={{ padding: 14 }}>
+          <div className="cy-mono" style={{ fontSize: 9 }}>TWEAKS</div>
+          <div className="cy-display" style={{ fontSize: 40 }}>05</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SystemBoard() {
+  return (
+    <div className="cy-root" style={{ height: '100%', background: 'var(--cy-paper)', padding: 24, border: '2px solid var(--cy-line)', overflow: 'auto' }}>
+      <div className="cy-mono" style={{ fontSize: 10, letterSpacing: '.2em', color: 'var(--cy-red)', fontWeight: 700 }}>§ SISTEMA VISUAL</div>
+      <div className="cy-display" style={{ fontSize: 46, lineHeight: .9 }}>STYLE<br/>GUIDE.</div>
+
+      <div style={{ marginTop: 16 }}>
+        <div className="cy-mono" style={{ fontSize: 10, fontWeight: 700, marginBottom: 6 }}>PALETA</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', border: '1.5px solid var(--cy-line)' }}>
+          {[
+            { c: 'var(--cy-ink)', n: 'INK' },
+            { c: 'var(--cy-paper)', n: 'PAPER' },
+            { c: 'var(--cy-accent)', n: 'ACCENT' },
+            { c: 'var(--cy-red)', n: 'RED' },
+            { c: 'var(--cy-field)', n: 'FIELD' },
+          ].map((x,i) => (
+            <div key={x.n} style={{ background: x.c, height: 70, borderRight: i<4 ? '1.5px solid var(--cy-line)' : 'none', display: 'flex', alignItems: 'flex-end', padding: 6, fontFamily: 'var(--cy-mono)', fontSize: 9, fontWeight: 700, color: ['INK','FIELD','RED'].includes(x.n) ? 'var(--cy-paper)' : 'var(--cy-ink)' }}>{x.n}</div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <div className="cy-mono" style={{ fontSize: 10, fontWeight: 700, marginBottom: 6 }}>TIPOGRAFÍA</div>
+        <div style={{ border: '1.5px solid var(--cy-line)', padding: 12 }}>
+          <div className="cy-display" style={{ fontSize: 38 }}>DISPLAY · ARCHIVO BLACK</div>
+          <div className="cy-cond" style={{ fontSize: 22, marginTop: 4 }}>Condensed · Bebas Neue</div>
+          <div style={{ fontSize: 14, marginTop: 6 }}>UI · Space Grotesk para cuerpo de texto</div>
+          <div className="cy-mono" style={{ fontSize: 11, marginTop: 4 }}>MONO · JetBrains Mono para datos y metadatos</div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <div className="cy-mono" style={{ fontSize: 10, fontWeight: 700, marginBottom: 6 }}>COMPONENTES</div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: 12, border: '1.5px solid var(--cy-line)' }}>
+          <span className="cy-chip">CHIP</span>
+          <span className="cy-chip cy-chip-fill">FILL</span>
+          <span className="cy-chip cy-chip-accent">ACCENT</span>
+          <span className="cy-btn" style={{ padding: '8px 12px', fontSize: 11 }}>BOTÓN</span>
+          <span className="cy-btn cy-btn-accent" style={{ padding: '8px 12px', fontSize: 11 }}>ACCENT</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

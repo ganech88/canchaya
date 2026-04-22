@@ -1,0 +1,16 @@
+{
+  "extends": "@canchaya/config/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM"],
+    "types": ["react"],
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@canchaya/ui": ["./src/index.ts"],
+      "@canchaya/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
+}
