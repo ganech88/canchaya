@@ -26,8 +26,7 @@ export default function DashboardPlaceholder() {
               iteración: Home del usuario (mobile) y Dashboard del dueño (web).
             </p>
             <div className="mt-8 flex gap-3">
-              <Button variant="accent">
-                <Icon name="bolt" size={14} />
+              <Button variant="accent" leftIcon={<Icon name="bolt" size={14} />}>
                 Empezar por Home
               </Button>
               <Button variant="ghost">Ver handoff</Button>

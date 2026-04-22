@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react'
-import { Pressable, Text, View, type ViewStyle } from 'react-native'
+import { Pressable, Text, type ViewStyle } from 'react-native'
 import { cn } from '../cn'
 
 export type ButtonVariant = 'ink' | 'accent' | 'ghost'
 
 interface ButtonProps {
   variant?: ButtonVariant
-  children: ReactNode
+  children: string
+  leftIcon?: ReactNode
+  rightIcon?: ReactNode
   onPress?: () => void
   disabled?: boolean
   className?: string
@@ -22,6 +24,8 @@ const variantClass: Record<ButtonVariant, { container: string; text: string }> =
 export function Button({
   variant = 'ink',
   children,
+  leftIcon,
+  rightIcon,
   onPress,
   disabled,
   className,
@@ -32,22 +36,21 @@ export function Button({
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      className={cn(
+        'flex-row items-center justify-center gap-2 border-card px-[18px] py-[14px]',
+        v.container,
+        className,
+      )}
       style={({ pressed }) => [
         { opacity: disabled ? 0.4 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
         style,
       ]}
     >
-      <View
-        className={cn(
-          'flex-row items-center justify-center border-card px-[18px] py-[14px]',
-          v.container,
-          className,
-        )}
-      >
-        <Text className={cn('font-ui text-sm font-bold uppercase tracking-wide', v.text)}>
-          {children}
-        </Text>
-      </View>
+      {leftIcon}
+      <Text className={cn('font-ui text-sm font-bold uppercase tracking-wide', v.text)}>
+        {children}
+      </Text>
+      {rightIcon}
     </Pressable>
   )
 }

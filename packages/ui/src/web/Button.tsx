@@ -3,9 +3,11 @@ import { cn } from '../cn'
 
 export type ButtonVariant = 'ink' | 'accent' | 'ghost'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   variant?: ButtonVariant
-  children: ReactNode
+  children: string
+  leftIcon?: ReactNode
+  rightIcon?: ReactNode
 }
 
 const variantClass: Record<ButtonVariant, string> = {
@@ -14,7 +16,14 @@ const variantClass: Record<ButtonVariant, string> = {
   ghost: 'bg-transparent text-cy-ink',
 }
 
-export function Button({ variant = 'ink', className, children, ...rest }: ButtonProps) {
+export function Button({
+  variant = 'ink',
+  children,
+  leftIcon,
+  rightIcon,
+  className,
+  ...rest
+}: ButtonProps) {
   return (
     <button
       type="button"
@@ -28,7 +37,9 @@ export function Button({ variant = 'ink', className, children, ...rest }: Button
       )}
       {...rest}
     >
+      {leftIcon}
       {children}
+      {rightIcon}
     </button>
   )
 }

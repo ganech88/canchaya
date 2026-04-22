@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { View, Text, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { router } from 'expo-router'
 import { Masthead, BottomNav, type BottomNavKey } from '@canchaya/ui/native'
 import { Icon } from '@/lib/icon'
 import { MOCK_COURTS } from '@/data/courts'
@@ -47,7 +48,10 @@ export default function Home() {
 
         {/* Search */}
         <View className="px-4 pb-3.5 pt-1.5">
-          <SearchBar />
+          <SearchBar
+            onPress={() => router.push('/search')}
+            onFilterPress={() => router.push('/search')}
+          />
         </View>
 
         {/* Category rail */}
