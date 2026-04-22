@@ -44,7 +44,18 @@ export default function RootLayout() {
           animationDuration: 240,
           contentStyle: { backgroundColor: '#f2ede1' },
         }}
-      />
+      >
+        {/* Popup modal: transparente sobre el screen anterior (típicamente Home). */}
+        <Stack.Screen
+          name="popup/open-match"
+          options={{
+            presentation: 'transparentModal',
+            animation: 'fade',
+            animationDuration: 180,
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+      </Stack>
     </SafeAreaProvider>
   )
 }

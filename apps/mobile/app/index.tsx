@@ -3,11 +3,12 @@
 // OpenMatchPromo → Nearby list → BottomNav.
 
 import { useState } from 'react'
-import { View, Text, ScrollView } from 'react-native'
+import { View, Text, Pressable, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
-import { Masthead, BottomNav, type BottomNavKey } from '@canchaya/ui/native'
+import { Masthead, BottomNav } from '@canchaya/ui/native'
 import { Icon } from '@/lib/icon'
+import { navigateBottomNav } from '@/lib/nav'
 import { MOCK_COURTS } from '@/data/courts'
 import { FeaturedCard } from '@/components/FeaturedCard'
 import { CourtRow } from '@/components/CourtRow'
@@ -16,7 +17,6 @@ import { CategoryRail, CATEGORY_LIST, type Category } from '@/components/Categor
 import { OpenMatchPromo } from '@/components/OpenMatchPromo'
 
 export default function Home() {
-  const [activeNav, setActiveNav] = useState<BottomNavKey>('home')
   const [category, setCategory] = useState<Category>(CATEGORY_LIST[0])
 
   const featured = MOCK_COURTS[0]
@@ -61,12 +61,15 @@ export default function Home() {
 
         {/* Featured card */}
         <View className="px-4 pb-3.5">
-          <FeaturedCard court={featured} />
+          <FeaturedCard
+            court={featured}
+            onPress={() => router.push(`/court/${featured.id}` as never)}
+          />
         </View>
 
         {/* Open match promo */}
         <View className="px-4 pb-3.5">
-          <OpenMatchPromo />
+          <OpenMatchPromo onPress={() => router.push('/popup/open-match')} />
         </View>
 
         {/* Nearby list */}
@@ -75,10 +78,13 @@ export default function Home() {
             <Text className="font-condensed text-[22px] leading-[21px] uppercase text-cy-ink">
               Cerca tuyo
             </Text>
-            <View className="flex-row items-center gap-1">
+            <Pressable
+              className="flex-row items-center gap-1"
+              onPress={() => router.push('/map')}
+            >
               <Text className="font-mono text-[10px] uppercase text-cy-muted">Ver mapa</Text>
               <Icon name="arrow" size={12} color="#6b6557" />
-            </View>
+            </Pressable>
           </View>
           <View className="h-1 bg-cy-line" />
           <View>
@@ -87,13 +93,14 @@ export default function Home() {
                 key={court.id}
                 court={court}
                 showBorder={i < nearby.length - 1}
+                onPress={() => router.push(`/court/${court.id}` as never)}
               />
             ))}
           </View>
         </View>
       </ScrollView>
 
-      <BottomNav active={activeNav} onPress={setActiveNav} IconComponent={Icon} />
+      <BottomNav active="home" onPress={navigateBottomNav} IconComponent={Icon} />
     </SafeAreaView>
   )
 }

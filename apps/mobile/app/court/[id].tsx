@@ -126,7 +126,8 @@ export default function CourtDetail() {
             variant="accent"
             disabled={!pickedHour}
             onPress={() => {
-              // TODO: flujo de pago (Mercado Pago) → cuando confirme, navegar al chat del partido.
+              // TODO: intercalar flujo de pago (Mercado Pago) — por ahora asumimos éxito y abrimos el chat del partido.
+              router.push(`/chat/${court.id}` as never)
             }}
             className="w-full"
             rightIcon={<Icon name="arrow" size={14} color="#0d0d0d" />}

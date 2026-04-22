@@ -2,13 +2,13 @@
 // Layout: top search bar flotante + mapa (fondo verde con "calles" svg + pins + user dot + FAB) +
 // bottom sheet con preview + BottomNav.
 
-import { useState } from 'react'
 import { View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import Svg, { Path } from 'react-native-svg'
-import { BottomNav, type BottomNavKey } from '@canchaya/ui/native'
+import { BottomNav } from '@canchaya/ui/native'
 import { Icon } from '@/lib/icon'
+import { navigateBottomNav } from '@/lib/nav'
 import { MOCK_COURTS } from '@/data/courts'
 import { MapPin, type PinVariant } from '@/components/map/MapPin'
 import { MapSearchBar } from '@/components/map/MapSearchBar'
@@ -31,7 +31,6 @@ const PINS: PinData[] = [
 ]
 
 export default function Map() {
-  const [activeNav, setActiveNav] = useState<BottomNavKey>('map')
   const selected = MOCK_COURTS[0]!
 
   return (
@@ -115,7 +114,7 @@ export default function Map() {
         onPressDetail={() => router.push(`/court/${selected.id}` as never)}
       />
 
-      <BottomNav active={activeNav} onPress={setActiveNav} IconComponent={Icon} />
+      <BottomNav active="map" onPress={navigateBottomNav} IconComponent={Icon} />
     </SafeAreaView>
   )
 }
