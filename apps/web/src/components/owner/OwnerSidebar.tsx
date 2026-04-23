@@ -12,13 +12,13 @@ interface NavEntry {
 }
 
 const NAV: NavEntry[] = [
-  { num: '01', label: 'Dashboard', href: '/dashboard', match: '/dashboard' },
-  { num: '02', label: 'Calendario', href: '/calendar', match: '/calendar' },
-  { num: '03', label: 'Canchas', href: '/courts', match: '/courts' },
-  { num: '04', label: 'Reservas', href: '/bookings/248', match: '/bookings' },
-  { num: '05', label: 'Consumo', href: '/drinks', match: '/drinks' },
-  { num: '06', label: 'Ingresos', href: '/revenue', match: '/revenue' },
-  { num: '07', label: 'Config', href: '/settings', match: '/settings' },
+  { num: '01', label: 'Dashboard', href: '/owner/dashboard', match: '/owner/dashboard' },
+  { num: '02', label: 'Calendario', href: '/owner/calendar', match: '/owner/calendar' },
+  { num: '03', label: 'Canchas', href: '/owner/courts', match: '/owner/courts' },
+  { num: '04', label: 'Reservas', href: '/owner/bookings/248', match: '/owner/bookings' },
+  { num: '05', label: 'Consumo', href: '/owner/drinks', match: '/owner/drinks' },
+  { num: '06', label: 'Ingresos', href: '/owner/revenue', match: '/owner/revenue' },
+  { num: '07', label: 'Config', href: '/owner/settings', match: '/owner/settings' },
 ]
 
 export function OwnerSidebar() {

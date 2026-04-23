@@ -84,7 +84,7 @@ export default function DashboardPage() {
             title="Próximos turnos"
             right={
               <Link
-                href="/calendar"
+                href={'/owner/calendar' as never}
                 className="font-mono text-[10px] uppercase text-cy-ink hover:text-cy-red"
               >
                 Ver calendario →
