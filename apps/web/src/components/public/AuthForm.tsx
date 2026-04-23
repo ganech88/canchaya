@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@/lib/supabase/client'
+import { createBrowserClient, isSupabaseConfigured } from '@/lib/supabase/client'
 
 type Mode = 'signin' | 'signup'
 
@@ -15,6 +15,7 @@ export function AuthForm({ initialMode = 'signin' }: { initialMode?: Mode }) {
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const supabaseReady = isSupabaseConfigured()
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,6 +56,17 @@ export function AuthForm({ initialMode = 'signin' }: { initialMode?: Mode }) {
           {mode === 'signin' ? 'ENTRAR.' : 'CREAR CUENTA.'}
         </p>
       </div>
+
+      {!supabaseReady && (
+        <div className="border-b-chip border-cy-red bg-cy-red/10 px-5 py-3">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-cy-red">
+            ⚠ Demo — Supabase no configurado
+          </p>
+          <p className="mt-1 font-mono text-[11px] text-cy-ink">
+            El formulario es navegable pero no se puede crear cuenta hasta linkear el proyecto.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={onSubmit} className="p-5">
         {mode === 'signup' && (
@@ -110,10 +122,10 @@ export function AuthForm({ initialMode = 'signin' }: { initialMode?: Mode }) {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !supabaseReady}
           className="w-full border-card border-cy-line bg-cy-accent py-3 font-ui text-[13px] font-bold uppercase tracking-wide text-cy-ink disabled:opacity-50"
         >
-          {loading ? '...' : mode === 'signin' ? 'Entrar' : 'Crear cuenta'}
+          {loading ? '...' : !supabaseReady ? 'Demo — no disponible' : mode === 'signin' ? 'Entrar' : 'Crear cuenta'}
         </button>
 
         <div className="mt-4 border-t border-cy-line pt-4 text-center">
