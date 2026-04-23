@@ -69,6 +69,24 @@ Ideal para **probar el layout** sin esperar un build. No genera APK descargable,
 
 ---
 
+### Conectar el APK al banner web
+
+Una vez que EAS Build termina, te da una URL del artefacto tipo
+`https://expo.dev/artifacts/eas/xxxxx.apk`. Esa URL es descargable directo
+desde cualquier device Android.
+
+Para que el banner "Instalar" en la web y la página `/app` apunten ahí:
+
+1. En **Vercel** → project settings → Environment Variables → agregar:
+   ```
+   NEXT_PUBLIC_ANDROID_APK_URL=https://expo.dev/artifacts/eas/xxxxx.apk
+   ```
+2. Redeploy (automático al próximo push, o manual desde Deployments).
+3. Cualquier visitante Android ve ahora el botón "Instalar" activo y la página
+   `/app` tiene el botón "Descargar APK" como primario.
+
+---
+
 ### Opción B — APK descargable con EAS Build (20–30 minutos)
 
 Esta sí genera un `.apk` que podés **descargar, instalar y compartir** con otros.
@@ -132,6 +150,9 @@ eas update --branch preview --message "Fix en ScreenHome"
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` (solo server actions / route handlers — nunca al cliente)
+- `NEXT_PUBLIC_ANDROID_APK_URL` (opcional) — URL directa del APK. Si está, el banner de
+  Android y la página `/app` linkean directo al archivo; si no, `/app` muestra
+  instrucciones de Expo Go como fallback.
 
 ### `apps/mobile`
 - `EXPO_PUBLIC_SUPABASE_URL`

@@ -1,3 +1,12 @@
+import Link from 'next/link'
+
+const PLAYER_LINKS = [
+  { label: 'Buscar cancha', href: '/results' },
+  { label: 'Partidos abiertos', href: '/matches' },
+  { label: 'App móvil', href: '/app' },
+  { label: 'Entrar', href: '/login' },
+] as const
+
 export function PublicFooter() {
   return (
     <footer className="border-t-card border-cy-line bg-cy-ink text-cy-paper">
@@ -18,10 +27,14 @@ export function PublicFooter() {
           <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-widest text-cy-accent">
             Para jugadores
           </p>
-          {['Buscar cancha', 'Partidos abiertos', 'App móvil', 'Mis reservas'].map((t) => (
-            <p key={t} className="py-1 font-mono text-[11px] text-cy-paper/80 hover:text-cy-accent">
-              {t}
-            </p>
+          {PLAYER_LINKS.map((it) => (
+            <Link
+              key={it.href}
+              href={it.href as never}
+              className="block py-1 font-mono text-[11px] text-cy-paper/80 hover:text-cy-accent"
+            >
+              {it.label}
+            </Link>
           ))}
         </div>
 
