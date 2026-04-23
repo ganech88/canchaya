@@ -59,3 +59,5 @@ coverage/
 # TS
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
