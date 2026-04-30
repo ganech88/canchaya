@@ -159,8 +159,63 @@ eas update --branch preview --message "Fix en ScreenHome"
 ### `apps/mobile`
 - `EXPO_PUBLIC_NHOST_SUBDOMAIN`
 - `EXPO_PUBLIC_NHOST_REGION`
+- `EXPO_PUBLIC_MAPBOX_TOKEN` (opcional, todavía no integrado)
+
+### Nhost Functions (server-side, set en dashboard Nhost → Settings → Env Vars)
+- `MP_ACCESS_TOKEN` — APP_USR-... del marketplace de Mercado Pago
+- `MP_WEBHOOK_SECRET` — secret para validar firma del webhook MP (TODO: validación)
+- `APP_URL` — `https://canchaya.vercel.app` (para back_urls + notification_url)
+- `APP_DEEP_LINK` — `canchaya://` (scheme del mobile para redirect post-pago)
 
 *(Los env vars con prefix `NEXT_PUBLIC_` / `EXPO_PUBLIC_` son inline-eados en el bundle y visibles al cliente. El `NHOST_ADMIN_SECRET` nunca lleva prefix — solo backend.)*
+
+---
+
+## Backend Nhost: aplicar cambios
+
+El proyecto Nhost ya está activo en `nqcsdeicmgstgjuikqxn.sa-east-1`. Para aplicar cambios al schema, permissions o seeds:
+
+### Schema (SQL)
+
+```bash
+# Aplicar una migration nueva (idempotente con IF NOT EXISTS / ON CONFLICT)
+node -e "
+const fs = require('fs');
+const sql = fs.readFileSync('nhost/migrations/default/<NEW_FILE>.sql', 'utf8');
+fetch('https://nqcsdeicmgstgjuikqxn.hasura.sa-east-1.nhost.run/v2/query', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-hasura-admin-secret': process.env.NHOST_ADMIN_SECRET },
+  body: JSON.stringify({ type: 'run_sql', args: { source: 'default', sql } }),
+}).then(r => r.text()).then(console.log);
+"
+```
+
+### Permissions + relationships
+
+```bash
+NHOST_ADMIN_SECRET='...' node nhost/metadata/apply-metadata.mjs
+```
+
+Idempotente — re-correr es no-op.
+
+### Seeds (catálogos + dev data)
+
+```bash
+# Mismo patrón que schema, apuntando a nhost/seeds/<file>.sql
+```
+
+### Functions (Mercado Pago)
+
+Las functions en `nhost/functions/` se deployan via Nhost CLI:
+
+```bash
+npm install -g nhost
+nhost login --pat <PAT>
+nhost link --subdomain nqcsdeicmgstgjuikqxn
+nhost deploy
+```
+
+Antes de deployar: setear `MP_ACCESS_TOKEN` y demás env vars en el dashboard (Settings → Environment Variables).
 
 ---
 

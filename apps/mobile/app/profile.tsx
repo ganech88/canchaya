@@ -9,6 +9,7 @@ import { IdentityCard } from '@/components/profile/IdentityCard'
 import { HeadlineStats } from '@/components/profile/HeadlineStats'
 import { SportBreakdown } from '@/components/profile/SportBreakdown'
 import { HistoryList } from '@/components/profile/HistoryList'
+import { AuthBanner } from '@/components/profile/AuthBanner'
 
 export default function Profile() {
   return (
@@ -20,6 +21,8 @@ export default function Profile() {
         contentContainerStyle={{ paddingBottom: 16 }}
         showsVerticalScrollIndicator={false}
       >
+        <AuthBanner />
+
         <IdentityCard
           memberNumber="0284"
           memberSince={2023}

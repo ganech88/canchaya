@@ -3,9 +3,12 @@
 
 import Link from 'next/link'
 import { Icon } from '@canchaya/ui/icons'
+import { fetchVenueList } from '@canchaya/db'
 import { ResultsFilters } from '@/components/public/ResultsFilters'
 import { VenueCard } from '@/components/public/VenueCard'
-import { MOCK_VENUES, SPORTS_CATALOG, CITIES } from '@/data/mock'
+import { SPORTS_CATALOG, CITIES } from '@/data/mock'
+import { venuesToCards } from '@/lib/adapters'
+import { getServerClient, isNhostConfigured } from '@/lib/nhost/server'
 
 interface PageProps {
   searchParams: Promise<{
@@ -17,47 +20,37 @@ interface PageProps {
   }>
 }
 
-function filterVenues(params: {
-  sport?: string
-  city?: string
-  amenities: string[]
-}): typeof MOCK_VENUES {
-  return MOCK_VENUES.filter((v) => {
-    if (params.sport) {
-      const parent = SPORTS_CATALOG.find((s) => s.code === params.sport)
-      const childCodes = 'children' in (parent ?? {}) ? (parent as { children?: string[] }).children ?? [] : []
-      const match = v.sports.includes(params.sport) || v.sports.some((s) => childCodes.includes(s))
-      if (!match) return false
+export default async function ResultsPage({ searchParams }: PageProps) {
+  const sp = await searchParams
+  const amenities = Array.isArray(sp.amenity) ? sp.amenity : sp.amenity ? [sp.amenity] : []
+
+  // Fetch real desde Nhost si está configurado; sino fallback a array vacío.
+  let venues: ReturnType<typeof venuesToCards> = []
+  if (isNhostConfigured()) {
+    try {
+      const nhost = getServerClient()
+      const rows = await fetchVenueList(nhost, { sportCode: sp.sport, limit: 50 })
+      venues = venuesToCards(rows)
+    } catch {
+      venues = []
     }
-    if (params.city) {
-      const cityEntry = CITIES.find((c) => c.code === params.city)
+  }
+
+  // Filtros que aplicamos en cliente (city + amenities) — el sport ya va en GraphQL.
+  const results = venues.filter((v) => {
+    if (sp.city) {
+      const cityEntry = CITIES.find((c) => c.code === sp.city)
       if (cityEntry && v.city.toLowerCase() !== cityEntry.name.toLowerCase()) return false
     }
-    if (params.amenities.length > 0) {
-      const hasAll = params.amenities.every((a) => v.amenities.includes(a))
+    if (amenities.length > 0) {
+      const hasAll = amenities.every((a) => v.amenities.includes(a))
       if (!hasAll) return false
     }
     return true
   })
-}
-
-export default async function ResultsPage({ searchParams }: PageProps) {
-  const sp = await searchParams
-  const amenities = Array.isArray(sp.amenity) ? sp.amenity : sp.amenity ? [sp.amenity] : []
-  const results = filterVenues({ sport: sp.sport, city: sp.city, amenities })
 
   const sportLabel = sp.sport ? SPORTS_CATALOG.find((s) => s.code === sp.sport)?.label : 'Todos los deportes'
   const cityLabel = sp.city ? CITIES.find((c) => c.code === sp.city)?.name : 'Todas las ciudades'
-
-  // Slots mock para cada venue
-  const mockSlots = [
-    { start: '19:00', priceFromCents: 1800000 },
-    { start: '20:00', priceFromCents: 1800000 },
-    { start: '20:30', priceFromCents: 1800000 },
-    { start: '21:00', priceFromCents: 2000000 },
-    { start: '22:00', priceFromCents: 2000000 },
-    { start: '22:30', priceFromCents: 2000000 },
-  ]
 
   return (
     <div className="grid" style={{ gridTemplateColumns: '280px 1fr' }}>
@@ -111,7 +104,7 @@ export default async function ResultsPage({ searchParams }: PageProps) {
           ) : (
             <div className="grid grid-cols-2 gap-5 xl:grid-cols-3">
               {results.map((v) => (
-                <VenueCard key={v.id} venue={v} slots={mockSlots} />
+                <VenueCard key={v.id} venue={v} />
               ))}
             </div>
           )}

@@ -1,14 +1,25 @@
 import { Icon } from '@canchaya/ui/icons'
 import { Eyebrow, Stamp, Chip } from '@canchaya/ui/web'
+import { fetchVenueList } from '@canchaya/db'
 import { SectionTitle } from '@/components/owner/SectionTitle'
 import { HeroSearch } from '@/components/public/HeroSearch'
 import { VenueCard } from '@/components/public/VenueCard'
 import { SportRail } from '@/components/public/SportRail'
 import { CityRail } from '@/components/public/CityRail'
 import { MOCK_VENUES } from '@/data/mock'
+import { venuesToCards } from '@/lib/adapters'
+import { getServerClient, isNhostConfigured } from '@/lib/nhost/server'
 
-export default function LandingPage() {
-  const featured = MOCK_VENUES.slice(0, 3)
+export default async function LandingPage() {
+  let featured = MOCK_VENUES.slice(0, 3)
+  if (isNhostConfigured()) {
+    try {
+      const rows = await fetchVenueList(getServerClient(), { limit: 3 })
+      if (rows.length > 0) featured = venuesToCards(rows)
+    } catch {
+      /* fallback to mocks */
+    }
+  }
 
   return (
     <>

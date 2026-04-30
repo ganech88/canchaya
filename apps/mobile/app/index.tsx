@@ -7,9 +7,12 @@ import { View, Text, Pressable, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Masthead, BottomNav } from '@canchaya/ui/native'
+import { fetchVenueList } from '@canchaya/db'
 import { Icon } from '@/lib/icon'
 import { navigateBottomNav } from '@/lib/nav'
 import { MOCK_COURTS } from '@/data/courts'
+import { venuesToMobileCourts } from '@/lib/adapters'
+import { useNhostQuery } from '@/lib/useQuery'
 import { FeaturedCard } from '@/components/FeaturedCard'
 import { CourtRow } from '@/components/CourtRow'
 import { SearchBar } from '@/components/SearchBar'
@@ -19,8 +22,11 @@ import { OpenMatchPromo } from '@/components/OpenMatchPromo'
 export default function Home() {
   const [category, setCategory] = useState<Category>(CATEGORY_LIST[0])
 
-  const featured = MOCK_COURTS[0]
-  const nearby = MOCK_COURTS.slice(1)
+  const venuesQuery = useNhostQuery((nhost) => fetchVenueList(nhost, { limit: 6 }), [])
+  const courts = venuesQuery.data ? venuesToMobileCourts(venuesQuery.data) : MOCK_COURTS
+
+  const featured = courts[0]
+  const nearby = courts.slice(1)
 
   if (!featured) return null
 

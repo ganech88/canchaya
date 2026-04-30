@@ -2,15 +2,27 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Chip, Placeholder, Rating, Stamp } from '@canchaya/ui/web'
 import { Icon } from '@canchaya/ui/icons'
+import { fetchVenueBySlug, fetchVenueList } from '@canchaya/db'
 import { SectionTitle } from '@/components/owner/SectionTitle'
 import { VenueCalendar } from '@/components/public/VenueCalendar'
 import { MOCK_VENUES, formatPriceFromCents } from '@/data/mock'
+import { venueDetailToView, venueToCard } from '@/lib/adapters'
+import { getServerClient, isNhostConfigured } from '@/lib/nhost/server'
 
 interface PageProps {
   params: Promise<{ slug: string }>
 }
 
 export async function generateStaticParams() {
+  // Si Nhost está configurado, generamos rutas para los venues reales; sino, los mocks.
+  if (isNhostConfigured()) {
+    try {
+      const rows = await fetchVenueList(getServerClient(), { limit: 50 })
+      if (rows.length > 0) return rows.map((v) => ({ slug: v.slug }))
+    } catch {
+      /* fallback to mocks */
+    }
+  }
   return MOCK_VENUES.map((v) => ({ slug: v.slug }))
 }
 
@@ -27,8 +39,22 @@ const AMENITY_LABELS: Record<string, string> = {
 
 export default async function VenueDetailPage({ params }: PageProps) {
   const { slug } = await params
-  const venue = MOCK_VENUES.find((v) => v.slug === slug)
-  if (!venue) notFound()
+
+  // Intentamos primero contra Nhost real; si no responde o no existe, fallback a mocks.
+  let venue: ReturnType<typeof venueToCard> | null = null
+  if (isNhostConfigured()) {
+    try {
+      const detail = await fetchVenueBySlug(getServerClient(), slug)
+      if (detail) venue = venueDetailToView(detail)
+    } catch {
+      /* fallback */
+    }
+  }
+  if (!venue) {
+    const mock = MOCK_VENUES.find((v) => v.slug === slug)
+    if (!mock) notFound()
+    venue = mock
+  }
 
   const reviews = [
     { user: 'Martín B.', stars: 5, text: 'Excelente cancha, muy mantenida. El bar es un plus. Volvemos todas las semanas.', date: '14 MAR' },

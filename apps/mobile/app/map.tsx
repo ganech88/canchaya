@@ -7,12 +7,20 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import Svg, { Path } from 'react-native-svg'
 import { BottomNav } from '@canchaya/ui/native'
+import { fetchVenueList } from '@canchaya/db'
 import { Icon } from '@/lib/icon'
 import { navigateBottomNav } from '@/lib/nav'
 import { MOCK_COURTS } from '@/data/courts'
+import { venuesToMobileCourts } from '@/lib/adapters'
+import { useNhostQuery } from '@/lib/useQuery'
 import { MapPin, type PinVariant } from '@/components/map/MapPin'
 import { MapSearchBar } from '@/components/map/MapSearchBar'
 import { MapBottomSheet } from '@/components/map/MapBottomSheet'
+
+// TODO: integrar Mapbox real (requiere @rnmapbox/maps + dev build con
+// EAS — no funciona en Expo Go). Por ahora es un placeholder visual con
+// pins posicionados manualmente. Cuando se integre, las coordenadas reales
+// vienen de venues.latitude/longitude (ya están en el schema).
 
 interface PinData {
   id: number
@@ -31,7 +39,9 @@ const PINS: PinData[] = [
 ]
 
 export default function Map() {
-  const selected = MOCK_COURTS[0]!
+  const venuesQuery = useNhostQuery((nhost) => fetchVenueList(nhost, { limit: 6 }), [])
+  const courts = venuesQuery.data ? venuesToMobileCourts(venuesQuery.data) : MOCK_COURTS
+  const selected = courts[0] ?? MOCK_COURTS[0]!
 
   return (
     <SafeAreaView className="flex-1 bg-cy-bg" edges={['top', 'bottom']}>

@@ -5,8 +5,11 @@ import { View, Text, ScrollView, Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Button } from '@canchaya/ui/native'
+import { fetchVenueList } from '@canchaya/db'
 import { Icon } from '@/lib/icon'
 import { MOCK_COURTS } from '@/data/courts'
+import { venuesToMobileCourts } from '@/lib/adapters'
+import { useNhostQuery } from '@/lib/useQuery'
 import { CourtRow } from '@/components/CourtRow'
 import { SearchHeader } from '@/components/search/SearchHeader'
 import { FilterSection } from '@/components/search/FilterSection'
@@ -26,9 +29,10 @@ export default function Search() {
     setExtras((curr) => (curr.includes(k) ? curr.filter((x) => x !== k) : [...curr, k]))
   }
 
-  // Mock de cantidad de resultados — cuando conectemos Supabase filtramos la query real.
-  const results = MOCK_COURTS.slice(1)
-  const resultsCount = 7
+  const venuesQuery = useNhostQuery((nhost) => fetchVenueList(nhost, { limit: 20 }), [])
+  const allCourts = venuesQuery.data ? venuesToMobileCourts(venuesQuery.data) : MOCK_COURTS
+  const results = allCourts.slice(1)
+  const resultsCount = allCourts.length
 
   return (
     <SafeAreaView className="flex-1 bg-cy-bg" edges={['top', 'bottom']}>

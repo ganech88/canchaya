@@ -1,6 +1,9 @@
+import { fetchOpenMatches } from '@canchaya/db'
 import { MatchesFilters } from '@/components/public/MatchesFilters'
 import { MatchCard } from '@/components/public/MatchCard'
 import { MOCK_MATCHES } from '@/data/matches'
+import { openMatchesToCards } from '@/lib/adapters'
+import { getServerClient, isNhostConfigured } from '@/lib/nhost/server'
 
 interface PageProps {
   searchParams: Promise<{
@@ -15,7 +18,17 @@ export default async function MatchesPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const radiusKm = Number(sp.radius ?? '5')
 
-  const filtered = MOCK_MATCHES.filter((m) => {
+  let matches = MOCK_MATCHES
+  if (isNhostConfigured()) {
+    try {
+      const rows = await fetchOpenMatches(getServerClient(), 50)
+      if (rows.length > 0) matches = openMatchesToCards(rows)
+    } catch {
+      /* fallback */
+    }
+  }
+
+  const filtered = matches.filter((m) => {
     if (sp.sport && m.sportCode !== sp.sport) {
       const parent = sp.sport === 'futbol' ? m.sportCode.startsWith('futbol_') : false
       if (!parent) return false
