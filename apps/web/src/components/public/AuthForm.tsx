@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FetchError } from '@nhost/nhost-js/fetch'
 import { getBrowserClient, isNhostConfigured } from '@/lib/nhost/client'
+import { ensureProfile } from '@/lib/nhost/profile'
 
 type Mode = 'signin' | 'signup'
 
@@ -29,29 +30,36 @@ export function AuthForm({ initialMode = 'signin' }: { initialMode?: Mode }) {
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const nhostReady = isNhostConfigured()
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setInfo(null)
     setLoading(true)
 
     try {
       const nhost = getBrowserClient()
       if (mode === 'signup') {
-        await nhost.auth.signUpEmailPassword({
+        const res = await nhost.auth.signUpEmailPassword({
           email,
           password,
-          options: {
-            displayName: name,
-            metadata: { name },
-          },
+          options: { displayName: name, metadata: { name } },
         })
+        // Si Nhost requiere email verification, no devuelve session: el user
+        // tiene que verificar el mail antes de poder usar la app.
+        if (!res.body.session) {
+          setInfo('Te mandamos un email para verificar la cuenta. Confirmalo y volvé a entrar.')
+          return
+        }
+        await ensureProfile(nhost, name)
         router.push('/')
         router.refresh()
       } else {
         await nhost.auth.signInEmailPassword({ email, password })
+        await ensureProfile(nhost)
         router.push('/')
         router.refresh()
       }
@@ -133,6 +141,12 @@ export function AuthForm({ initialMode = 'signin' }: { initialMode?: Mode }) {
         {error && (
           <div className="mb-4 border-chip border-cy-red bg-cy-red/10 px-3 py-2 font-mono text-[11px] text-cy-red">
             {error}
+          </div>
+        )}
+
+        {info && (
+          <div className="mb-4 border-chip border-cy-line bg-cy-accent/20 px-3 py-2 font-mono text-[11px] text-cy-ink">
+            {info}
           </div>
         )}
 

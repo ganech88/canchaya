@@ -1,5 +1,6 @@
 import 'react-native-url-polyfill/auto'
 import { createBrowserClient, type CanchaYaClient } from '@canchaya/db'
+import { AsyncStorageBackend } from './nhost-storage'
 
 const subdomain = process.env.EXPO_PUBLIC_NHOST_SUBDOMAIN
 const region = process.env.EXPO_PUBLIC_NHOST_REGION
@@ -10,22 +11,29 @@ export function isNhostConfigured(): boolean {
   )
 }
 
+const storage = new AsyncStorageBackend()
+
 let cachedClient: CanchaYaClient | null = null
 
-// TODO: agregar AsyncStorage adapter para persistir sesión entre cold starts.
-// La interfaz SessionStorageBackend de Nhost v4 es sync, AsyncStorage es async,
-// así que necesita un wrapper con preload + cache. Diferido hasta tener auth funcional.
-// Por ahora, sesión vive en memoria — re-login requerido al reabrir la app.
+/**
+ * Hidratación de la sesión desde AsyncStorage. Llamar UNA vez al boot del app
+ * (en app/_layout.tsx) antes de usar getNhost().
+ */
+export async function preloadNhostSession(): Promise<void> {
+  await storage.preload()
+}
+
 export function getNhost(): CanchaYaClient {
   if (!isNhostConfigured()) {
     throw new Error(
-      'Nhost no configurado. Copiá .env.example a .env con EXPO_PUBLIC_NHOST_SUBDOMAIN y EXPO_PUBLIC_NHOST_REGION.',
+      'Nhost no configurado. Setear EXPO_PUBLIC_NHOST_SUBDOMAIN y EXPO_PUBLIC_NHOST_REGION en .env.',
     )
   }
   if (!cachedClient) {
     cachedClient = createBrowserClient({
       subdomain: subdomain!,
       region: region!,
+      storage,
     })
   }
   return cachedClient

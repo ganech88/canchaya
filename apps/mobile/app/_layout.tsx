@@ -11,10 +11,11 @@ import {
   JetBrainsMono_400Regular,
   JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { preloadNhostSession } from '@/lib/nhost'
 
 SplashScreen.preventAutoHideAsync().catch(() => {})
 
@@ -27,12 +28,21 @@ export default function RootLayout() {
     JetBrainsMono: JetBrainsMono_400Regular,
     JetBrainsMonoBold: JetBrainsMono_700Bold,
   })
+  const [sessionHydrated, setSessionHydrated] = useState(false)
 
   useEffect(() => {
-    if (loaded || error) SplashScreen.hideAsync().catch(() => {})
-  }, [loaded, error])
+    preloadNhostSession()
+      .catch(() => {})
+      .finally(() => setSessionHydrated(true))
+  }, [])
 
-  if (!loaded && !error) return null
+  useEffect(() => {
+    if ((loaded || error) && sessionHydrated) {
+      SplashScreen.hideAsync().catch(() => {})
+    }
+  }, [loaded, error, sessionHydrated])
+
+  if ((!loaded && !error) || !sessionHydrated) return null
 
   return (
     <SafeAreaProvider>
