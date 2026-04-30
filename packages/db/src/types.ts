@@ -1,6 +1,6 @@
-// Types del dominio — espejo manual del schema SQL.
-// Cuando tengamos Supabase linkeado, corremos `pnpm db:types` y este archivo se reemplaza
-// con los generados automáticamente.
+// Types del dominio — espejo manual del schema SQL aplicado en Nhost.
+// Cuando montemos codegen GraphQL, los types de queries/mutations vendrán de ahí;
+// estos seguirán siendo la fuente de verdad de las row shapes.
 
 // ═══ Enums ═══════════════════════════════════════════════════════════════════
 export type UserRole = 'player' | 'owner' | 'admin'
@@ -76,7 +76,10 @@ export interface Venue {
   description: string | null
   address: string
   city: string | null
-  location: { type: 'Point'; coordinates: [number, number] } | null
+  // Nhost free tier no incluye postgis: lat/lng como numeric en vez de geography(point).
+  // TODO: cuando upgradeemos plan, volver a `location: { type: 'Point'; coordinates: [lng, lat] }`.
+  latitude: number | null
+  longitude: number | null
   geohash: string | null
   phone: string | null
   photos: string[]
@@ -253,48 +256,5 @@ export interface AvailableSlot {
   price_cents: number
 }
 
-// ═══ Database shape (la pide @supabase/supabase-js) ══════════════════════════
-type OmitAudit<T> = Omit<T, 'id' | 'created_at' | 'updated_at'>
-
-export type Database = {
-  public: {
-    Tables: {
-      countries:            { Row: Country;        Insert: Country;                                       Update: Partial<Country> }
-      sports:               { Row: Sport;          Insert: Sport;                                         Update: Partial<Sport> }
-      amenities:            { Row: Amenity;        Insert: Omit<Amenity, 'id'>;                           Update: Partial<Amenity> }
-      profiles:             { Row: Profile;        Insert: Partial<Profile> & { id: string; name: string; email: string }; Update: Partial<Profile> }
-      venues:               { Row: Venue;          Insert: OmitAudit<Venue> & { id?: string };            Update: Partial<Venue> }
-      venue_sports:         { Row: VenueSport;     Insert: VenueSport;                                    Update: Partial<VenueSport> }
-      venue_amenities:      { Row: VenueAmenity;   Insert: VenueAmenity;                                  Update: Partial<VenueAmenity> }
-      business_hours:       { Row: BusinessHour;   Insert: Omit<BusinessHour, 'id'>;                      Update: Partial<BusinessHour> }
-      venue_closures:       { Row: VenueClosure;   Insert: Omit<VenueClosure, 'id' | 'created_at'>;       Update: Partial<VenueClosure> }
-      courts:               { Row: Court;          Insert: Omit<Court, 'id' | 'created_at'> & { id?: string }; Update: Partial<Court> }
-      price_rules:          { Row: PriceRule;      Insert: Omit<PriceRule, 'id' | 'created_at'> & { id?: string }; Update: Partial<PriceRule> }
-      bookings:             { Row: Booking;        Insert: OmitAudit<Booking> & { id?: string };          Update: Partial<Booking> }
-      booking_participants: { Row: BookingParticipant; Insert: BookingParticipant;                        Update: Partial<BookingParticipant> }
-      open_matches:         { Row: OpenMatch;      Insert: Omit<OpenMatch, 'id' | 'created_at'> & { id?: string }; Update: Partial<OpenMatch> }
-      reviews:              { Row: Review;         Insert: Omit<Review, 'id' | 'created_at'> & { id?: string }; Update: Partial<Review> }
-      products:             { Row: Product;        Insert: Omit<Product, 'id' | 'created_at'> & { id?: string }; Update: Partial<Product> }
-      sales:                { Row: Sale;           Insert: Omit<Sale, 'id' | 'created_at'> & { id?: string }; Update: Partial<Sale> }
-      chat_messages:        { Row: ChatMessage;    Insert: Omit<ChatMessage, 'id' | 'created_at'> & { id?: string }; Update: Partial<ChatMessage> }
-    }
-    Views: Record<string, never>
-    Functions: {
-      available_slots: {
-        Args: { p_court_id: string; p_date: string; p_duration_minutes?: number }
-        Returns: AvailableSlot[]
-      }
-    }
-    Enums: {
-      user_role: UserRole
-      booking_status: BookingStatus
-      payment_status: PaymentStatus
-      match_level: MatchLevel
-      open_match_status: OpenMatchStatus
-      product_category: ProductCategory
-      gender_option: Gender
-      gender_filter: GenderFilter
-      day_of_week_code: DayOfWeekCode
-    }
-  }
-}
+// Las row shapes de arriba son la fuente de verdad mientras no haya codegen GraphQL.
+// Cuando agreguemos codegen, los tipos generados van a derivar del schema introspeccionado de Hasura.

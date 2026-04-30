@@ -13,11 +13,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "echo 'no lint yet'",
-    "gen": "supabase gen types typescript --local > src/types.generated.ts",
     "clean": "rm -rf .turbo dist"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@nhost/nhost-js": "^4.7.0"
   },
   "devDependencies": {
     "@canchaya/config": "workspace:*",

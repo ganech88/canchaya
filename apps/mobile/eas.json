@@ -12,8 +12,8 @@
         "gradleCommand": ":app:assembleDebug"
       },
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "https://placeholder.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "placeholder"
+        "EXPO_PUBLIC_NHOST_SUBDOMAIN": "placeholder",
+        "EXPO_PUBLIC_NHOST_REGION": "sa-east-1"
       }
     },
     "preview": {
@@ -22,8 +22,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "https://placeholder.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "placeholder"
+        "EXPO_PUBLIC_NHOST_SUBDOMAIN": "placeholder",
+        "EXPO_PUBLIC_NHOST_REGION": "sa-east-1"
       }
     },
     "production": {

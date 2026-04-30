@@ -3,9 +3,24 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient, isSupabaseConfigured } from '@/lib/supabase/client'
+import { FetchError } from '@nhost/nhost-js/fetch'
+import { getBrowserClient, isNhostConfigured } from '@/lib/nhost/client'
 
 type Mode = 'signin' | 'signup'
+
+interface AuthErrorBody {
+  error?: string
+  message?: string
+}
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof FetchError) {
+    const body = err.body as AuthErrorBody | undefined
+    return body?.message ?? body?.error ?? err.message
+  }
+  if (err instanceof Error) return err.message
+  return 'Error desconocido'
+}
 
 export function AuthForm({ initialMode = 'signin' }: { initialMode?: Mode }) {
   const router = useRouter()
@@ -15,7 +30,7 @@ export function AuthForm({ initialMode = 'signin' }: { initialMode?: Mode }) {
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const supabaseReady = isSupabaseConfigured()
+  const nhostReady = isNhostConfigured()
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,24 +38,25 @@ export function AuthForm({ initialMode = 'signin' }: { initialMode?: Mode }) {
     setLoading(true)
 
     try {
-      const supabase = createBrowserClient()
+      const nhost = getBrowserClient()
       if (mode === 'signup') {
-        const { error: err } = await supabase.auth.signUp({
+        await nhost.auth.signUpEmailPassword({
           email,
           password,
-          options: { data: { name } },
+          options: {
+            displayName: name,
+            metadata: { name },
+          },
         })
-        if (err) throw err
-        router.push('/' as never)
+        router.push('/')
         router.refresh()
       } else {
-        const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-        if (err) throw err
-        router.push('/' as never)
+        await nhost.auth.signInEmailPassword({ email, password })
+        router.push('/')
         router.refresh()
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido')
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -57,10 +73,10 @@ export function AuthForm({ initialMode = 'signin' }: { initialMode?: Mode }) {
         </p>
       </div>
 
-      {!supabaseReady && (
+      {!nhostReady && (
         <div className="border-b-chip border-cy-red bg-cy-red/10 px-5 py-3">
           <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-cy-red">
-            ⚠ Demo — Supabase no configurado
+            ⚠ Demo — Nhost no configurado
           </p>
           <p className="mt-1 font-mono text-[11px] text-cy-ink">
             El formulario es navegable pero no se puede crear cuenta hasta linkear el proyecto.
@@ -122,10 +138,10 @@ export function AuthForm({ initialMode = 'signin' }: { initialMode?: Mode }) {
 
         <button
           type="submit"
-          disabled={loading || !supabaseReady}
+          disabled={loading || !nhostReady}
           className="w-full border-card border-cy-line bg-cy-accent py-3 font-ui text-[13px] font-bold uppercase tracking-wide text-cy-ink disabled:opacity-50"
         >
-          {loading ? '...' : !supabaseReady ? 'Demo — no disponible' : mode === 'signin' ? 'Entrar' : 'Crear cuenta'}
+          {loading ? '...' : !nhostReady ? 'Demo — no disponible' : mode === 'signin' ? 'Entrar' : 'Crear cuenta'}
         </button>
 
         <div className="mt-4 border-t border-cy-line pt-4 text-center">

@@ -12,7 +12,7 @@ pnpm --filter @canchaya/web dev
 
 Abre en http://localhost:3000. Navegá `/`, `/results`, `/venues/la-bombonerita`, `/matches`, `/login`, `/owner/dashboard`.
 
-La web arranca **sin Supabase** — los screens se nutren de mocks de `src/data/*`. El form de `/login` muestra el aviso "demo · no configurado" hasta que linkees el proyecto.
+La web arranca **sin Nhost** — los screens se nutren de mocks de `src/data/*`. El form de `/login` muestra el aviso "demo · no configurado" hasta que setees `NEXT_PUBLIC_NHOST_SUBDOMAIN` y `NEXT_PUBLIC_NHOST_REGION`.
 
 ---
 
@@ -29,14 +29,14 @@ La web arranca **sin Supabase** — los screens se nutren de mocks de `src/data/
    - **Framework Preset:** Vercel debería autodetectar Next.js (si no, elegir **Next.js**)
    - **Root Directory:** dejá **vacío** (la config vive en `/vercel.json` de la raíz)
    - **Build & Output Settings:** no toques nada (ya están en `vercel.json`)
-4. **Environment Variables** → agregar:
+4. **Environment Variables** → agregar las del proyecto Nhost:
 
-   | Key | Value (por ahora) |
+   | Key | Value |
    |---|---|
-   | `NEXT_PUBLIC_SUPABASE_URL` | `https://placeholder.supabase.co` |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `placeholder-key-change-when-ready` |
+   | `NEXT_PUBLIC_NHOST_SUBDOMAIN` | `nqcsdeicmgstgjuikqxn` (o el subdomain del proyecto) |
+   | `NEXT_PUBLIC_NHOST_REGION` | `sa-east-1` |
 
-   *(Estos placeholders evitan que el form de auth tire un error en runtime. Cuando el proyecto Supabase esté activo, los reemplazás con los reales.)*
+   *(Si no están seteadas, el form de auth muestra el aviso "demo · no configurado" y deshabilita el submit, en vez de tirar error.)*
 
 5. Click **Deploy**. En ~2-3 minutos la URL queda disponible: `https://canchaya.vercel.app` (o similar).
 
@@ -44,10 +44,12 @@ La web arranca **sin Supabase** — los screens se nutren de mocks de `src/data/
 
 Cada push a `main` deploya automáticamente. Para preview de otras branches, Vercel crea URLs únicas.
 
-### Cuando Supabase esté activo
+### Rotar credenciales de Nhost
 
-1. Conseguir las credenciales del proyecto (dashboard de Supabase → API settings).
-2. En Vercel → Project Settings → **Environment Variables** → editar las dos keys.
+Si cambia el subdomain (proyecto recreado) o se rota el admin secret:
+
+1. En el dashboard de Nhost → Settings → General copiar el subdomain.
+2. En Vercel → Project Settings → **Environment Variables** → editar.
 3. Redeploy (automatic desde "Deployments" → "Redeploy").
 
 ---
@@ -147,18 +149,18 @@ eas update --branch preview --message "Fix en ScreenHome"
 ## Variables de entorno
 
 ### `apps/web`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (solo server actions / route handlers — nunca al cliente)
+- `NEXT_PUBLIC_NHOST_SUBDOMAIN`
+- `NEXT_PUBLIC_NHOST_REGION`
+- `NHOST_ADMIN_SECRET` (solo server actions / route handlers — nunca al cliente)
 - `NEXT_PUBLIC_ANDROID_APK_URL` (opcional) — URL directa del APK. Si está, el banner de
   Android y la página `/app` linkean directo al archivo; si no, `/app` muestra
   instrucciones de Expo Go como fallback.
 
 ### `apps/mobile`
-- `EXPO_PUBLIC_SUPABASE_URL`
-- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `EXPO_PUBLIC_NHOST_SUBDOMAIN`
+- `EXPO_PUBLIC_NHOST_REGION`
 
-*(Los env vars con prefix `NEXT_PUBLIC_` / `EXPO_PUBLIC_` son inline-eados en el bundle y visibles al cliente. El `SERVICE_ROLE_KEY` nunca lleva prefix — solo backend.)*
+*(Los env vars con prefix `NEXT_PUBLIC_` / `EXPO_PUBLIC_` son inline-eados en el bundle y visibles al cliente. El `NHOST_ADMIN_SECRET` nunca lleva prefix — solo backend.)*
 
 ---
 

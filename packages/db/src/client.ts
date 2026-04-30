@@ -1,37 +1,61 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from './types'
+import {
+  createClient,
+  createServerClient,
+  withAdminSession,
+  type NhostClient,
+  type NhostClientOptions,
+} from '@nhost/nhost-js'
+import { MemoryStorage, type SessionStorageBackend } from '@nhost/nhost-js/session'
 
-export type CanchaYaClient = SupabaseClient<Database>
+export type CanchaYaClient = NhostClient
 
-interface ClientConfig {
-  url: string
-  anonKey: string
-  // opcional: para server actions / edge functions con más permisos
-  serviceRoleKey?: string
-  // React Native: pasar AsyncStorage desde el app. Web: undefined (localStorage por default).
-  storage?: {
-    getItem: (key: string) => Promise<string | null> | string | null
-    setItem: (key: string, value: string) => Promise<void> | void
-    removeItem: (key: string) => Promise<void> | void
-  }
+export interface ClientConfig {
+  subdomain: string
+  region: string
+  // RN: pasar AsyncStorage adapter custom. Web browser: undefined → localStorage por default.
+  storage?: SessionStorageBackend
+  // Sólo server-side. NUNCA en bundle de cliente.
+  adminSecret?: string
 }
 
-export function createBrowserClient({ url, anonKey, storage }: ClientConfig): CanchaYaClient {
-  return createClient<Database>(url, anonKey, {
-    auth: {
-      storage: storage as never,
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: typeof window !== 'undefined',
-    },
+export function createBrowserClient({
+  subdomain,
+  region,
+  storage,
+}: ClientConfig): CanchaYaClient {
+  const opts: NhostClientOptions = { subdomain, region }
+  if (storage) opts.storage = storage
+  return createClient(opts)
+}
+
+export function createSsrClient({
+  subdomain,
+  region,
+  storage,
+}: ClientConfig): CanchaYaClient {
+  return createServerClient({
+    subdomain,
+    region,
+    storage: storage ?? new MemoryStorage(),
   })
 }
 
-export function createServiceRoleClient({ url, serviceRoleKey }: ClientConfig): CanchaYaClient {
-  if (!serviceRoleKey) {
-    throw new Error('serviceRoleKey is required for service-role client')
+export function createAdminClientWithSecret({
+  subdomain,
+  region,
+  adminSecret,
+  role = 'user',
+  userId,
+}: ClientConfig & { role?: string; userId?: string }): CanchaYaClient {
+  if (!adminSecret) {
+    throw new Error('adminSecret is required for admin client')
   }
-  return createClient<Database>(url, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
+  const sessionVariables: Record<string, string> = {}
+  if (userId) sessionVariables['user-id'] = userId
+  return createServerClient({
+    subdomain,
+    region,
+    storage: new MemoryStorage(),
+    configure: [withAdminSession({ adminSecret, role, sessionVariables })],
   })
 }

@@ -1,19 +1,17 @@
 -- ============================================================================
--- CanchaYa — schema inicial (consolidado post-análisis de atcsports)
+-- CanchaYa — schema inicial (Nhost / Hasura)
 -- ============================================================================
--- Cambios notables vs. draft original:
---   • Catálogos normalizados: countries, sports (jerárquico), amenities.
---   • venues.sports[] → tabla de join venue_sports.
---   • venues.amenities[] → tabla de join venue_amenities.
---   • Money como integer cents. Currency a nivel de country/venue.
---   • business_hours + venue_closures (feriados / cierres ad-hoc).
---   • reviews con aggregates denormalizados en venues.
---   • Seña/balance en bookings + cancellation_hours_notice por venue.
---   • profiles: gender + birth_date para matchmaking.
+-- Adaptado desde supabase/migrations/20260422000001_initial_schema.sql.
+-- Diferencias vs. la versión Supabase:
+--   • Sin trigger en auth.users: Nhost no permite (relation owned by Nhost).
+--     La creación de profile se hace desde el cliente post-signup.
+--   • RLS no se habilita acá: Hasura permissions reemplazan a RLS.
+--   • postgis no disponible en Nhost free tier (requiere superuser):
+--     venues.location → latitude/longitude numeric. Distancia con haversine.
 -- ============================================================================
 
 create extension if not exists "pgcrypto";
-create extension if not exists "postgis";
+-- create extension if not exists "postgis";  -- TODO: rehabilitar cuando upgradeemos plan
 
 -- ── Enums ────────────────────────────────────────────────────────────────────
 create type user_role         as enum ('player', 'owner', 'admin');
@@ -96,7 +94,9 @@ create table public.venues (
   description                text,
   address                    text not null,
   city                       text,
-  location                   geography(point, 4326),
+  -- TODO: cuando postgis esté disponible, reemplazar lat/lng con geography(point, 4326)
+  latitude                   numeric(10, 7),
+  longitude                  numeric(10, 7),
   geohash                    text,
   phone                      text,
   photos                     text[] not null default '{}',
@@ -114,7 +114,7 @@ create table public.venues (
   created_at                 timestamptz not null default now(),
   updated_at                 timestamptz not null default now()
 );
-create index on public.venues using gist (location);
+create index on public.venues (latitude, longitude);
 create index on public.venues (owner_id);
 create index on public.venues (country_id);
 create index on public.venues (geohash);
@@ -321,28 +321,55 @@ create trigger venues_touch before update on public.venues
 create trigger bookings_touch before update on public.bookings
   for each row execute function public.tg_touch_updated_at();
 
--- ── handle_new_user: crea profile con country default al signup ─────────────
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
+-- ── ensure_profile: crea profile si no existe (llamada desde el cliente) ────
+-- Nhost no permite triggers en auth.users, así que en lugar del trigger
+-- on_auth_user_created hacemos:
+--   1) Cliente llama a nhost.auth.signUp() → user en auth.users
+--   2) Cliente llama a esta función vía RPC con su user_id
+-- La función es SECURITY DEFINER y verifica que el user exista en auth.users.
+create or replace function public.ensure_profile(
+  p_user_id uuid,
+  p_name    text default null,
+  p_role    text default 'player'
+)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public
+as $$
 declare
   v_country_id smallint;
+  v_email      text;
+  v_display    text;
+  v_meta_name  text;
+  v_existing   public.profiles%rowtype;
 begin
+  -- Si ya existe, devolverla
+  select * into v_existing from public.profiles where id = p_user_id;
+  if found then return v_existing; end if;
+
+  -- Verificar que el user existe en auth.users
+  select u.email::text, u.display_name, u.metadata->>'name'
+    into v_email, v_display, v_meta_name
+  from auth.users u where u.id = p_user_id;
+  if v_email is null then
+    raise exception 'auth user not found for id %', p_user_id;
+  end if;
+
   select id into v_country_id from public.countries where is_default = true limit 1;
+
   insert into public.profiles (id, name, email, role, country_id)
   values (
-    new.id,
-    coalesce(new.raw_user_meta_data ->> 'name', split_part(new.email, '@', 1)),
-    new.email,
-    coalesce((new.raw_user_meta_data ->> 'role')::user_role, 'player'),
+    p_user_id,
+    coalesce(p_name, v_meta_name, v_display, split_part(v_email, '@', 1)),
+    v_email,
+    coalesce(nullif(p_role, '')::user_role, 'player'),
     v_country_id
-  );
-  return new;
-end; $$;
+  )
+  returning * into v_existing;
 
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
+  return v_existing;
+end; $$;
 
 -- ── reviews → venues rating aggregates ──────────────────────────────────────
 create or replace function public.tg_refresh_venue_rating()
