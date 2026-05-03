@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@canchaya/ui/web'
 import { Icon } from '@canchaya/ui/icons'
+import { fetchOwnerBookingsRange, fetchOwnerCourts, fetchOwnerSales } from '@canchaya/db'
 import { OwnerHeader } from '@/components/owner/OwnerHeader'
 import { SectionTitle } from '@/components/owner/SectionTitle'
 import { KpiGrid, type Kpi } from '@/components/owner/KpiGrid'
@@ -9,15 +10,28 @@ import { LiveCourts, type LiveCourt } from '@/components/owner/LiveCourts'
 import { AlertCard } from '@/components/owner/AlertCard'
 import { DrinksRanking, type DrinkRow } from '@/components/owner/DrinksRanking'
 import { RevenueChart } from '@/components/owner/RevenueChart'
+import { getOwnerContext } from '@/lib/nhost/owner'
+import {
+  bookingsToTimeline,
+  buildKpis,
+  courtsToLive,
+} from '@/lib/owner-adapters'
 
-const KPIS: Kpi[] = [
+// Mocks de fallback (producto y datos no seedeados aún)
+const KPIS_FALLBACK: Kpi[] = [
   { key: 'Reservas hoy', value: '24', delta: '+18%', sub: '17 F5 · 5 Pádel · 2 F8' },
-  { key: 'Ingresos hoy', value: '$438K', delta: '+24%', sub: '$310K canchas · $128K bar', accent: true },
+  {
+    key: 'Ingresos hoy',
+    value: '$438K',
+    delta: '+24%',
+    sub: '$310K canchas · $128K bar',
+    accent: true,
+  },
   { key: 'Ocupación', value: '82%', delta: '+6pts', sub: '4 canchas · 14h activas' },
   { key: 'Clientes', value: '186', delta: '+32', sub: '48 nuevos este mes' },
 ]
 
-const TIMELINE: TimelineRow[] = [
+const TIMELINE_FALLBACK: TimelineRow[] = [
   { time: '19:00', duration: '1h', court: 'F5 · C1', who: 'Martín B.', people: '10 pers.', status: 'CONFIRMADA' },
   { time: '19:00', duration: '1h', court: 'F5 · C2', who: 'Empresa XYZ', people: '10 pers.', status: 'PAGADA' },
   { time: '20:00', duration: '1.5h', court: 'PÁDEL · P1', who: 'Laura / Nico', people: '4 pers.', status: 'CONFIRMADA' },
@@ -26,14 +40,14 @@ const TIMELINE: TimelineRow[] = [
   { time: '22:00', duration: '1h', court: 'F5 · C1', who: 'Reserva app', people: '10 pers.', status: 'SEÑADO' },
 ]
 
-const LIVE: LiveCourt[] = [
+const LIVE_FALLBACK: LiveCourt[] = [
   { label: 'C1 · F5', status: 'EN JUEGO', who: 'Los Muchachos', time: '19:00 – 20:00', pct: 68 },
   { label: 'C2 · F5', status: 'EN JUEGO', who: 'Empresa XYZ', time: '19:00 – 20:00', pct: 68 },
   { label: 'C3 · F5', status: 'LIBRE', who: '— próximo 20:30', time: '—', pct: 0 },
   { label: 'P1 · Pádel', status: 'LIBRE', who: '— próximo 20:00', time: '—', pct: 0 },
 ]
 
-const DRINKS: DrinkRow[] = [
+const DRINKS_FALLBACK: DrinkRow[] = [
   { rank: 1, name: 'Cerveza Quilmes 1L', units: 284, revenue: '$340K' },
   { rank: 2, name: 'Gatorade Naranja 500ml', units: 211, revenue: '$148K' },
   { rank: 3, name: 'Coca-Cola 500ml', units: 198, revenue: '$118K' },
@@ -41,21 +55,97 @@ const DRINKS: DrinkRow[] = [
   { rank: 5, name: 'Powerade Azul 500ml', units: 142, revenue: '$98K' },
 ]
 
-const REVENUE_30D = [
+const REVENUE_30D_FALLBACK = [
   42, 58, 51, 72, 64, 80, 92, 68, 77, 85, 90, 63, 74, 88, 95, 82, 70, 91, 98, 86, 73, 90, 102, 88,
   79, 95, 110, 94, 88, 100,
 ]
 
-export default function DashboardPage() {
+interface DashboardData {
+  kpis: Kpi[]
+  timeline: TimelineRow[]
+  live: LiveCourt[]
+  venueName: string
+  drinks: DrinkRow[]
+  revenue30d: number[]
+  isReal: boolean
+}
+
+async function loadDashboard(): Promise<DashboardData> {
+  const fallback: DashboardData = {
+    kpis: KPIS_FALLBACK,
+    timeline: TIMELINE_FALLBACK,
+    live: LIVE_FALLBACK,
+    venueName: 'La Bombonerita',
+    drinks: DRINKS_FALLBACK,
+    revenue30d: REVENUE_30D_FALLBACK,
+    isReal: false,
+  }
+  const ctx = await getOwnerContext()
+  if (!ctx) return fallback
+
+  try {
+    const now = new Date()
+    const startOfDay = new Date(now)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(startOfDay)
+    endOfDay.setDate(endOfDay.getDate() + 1)
+    const weekStart = new Date(startOfDay)
+    weekStart.setDate(weekStart.getDate() - startOfDay.getDay())
+    const weekEnd = new Date(weekStart)
+    weekEnd.setDate(weekEnd.getDate() + 7)
+    const prevWeekStart = new Date(weekStart)
+    prevWeekStart.setDate(prevWeekStart.getDate() - 7)
+
+    const [todayBookings, weekBookings, prevWeekBookings, courts, salesToday] = await Promise.all([
+      fetchOwnerBookingsRange(ctx.client, ctx.selectedVenue.id, startOfDay, endOfDay),
+      fetchOwnerBookingsRange(ctx.client, ctx.selectedVenue.id, weekStart, weekEnd),
+      fetchOwnerBookingsRange(ctx.client, ctx.selectedVenue.id, prevWeekStart, weekStart),
+      fetchOwnerCourts(ctx.client, ctx.selectedVenue.id, weekStart),
+      fetchOwnerSales(ctx.client, ctx.selectedVenue.id, startOfDay),
+    ])
+
+    const todaySalesCents = salesToday.reduce((acc, s) => acc + s.total_cents, 0)
+    const kpis = buildKpis({
+      todayBookings,
+      weekBookings,
+      prevWeekBookings,
+      courtsCount: ctx.selectedVenue.courts_aggregate.aggregate.count,
+      todaySalesCents,
+    })
+    const timeline = bookingsToTimeline(todayBookings)
+    const live = courtsToLive(courts, todayBookings, now)
+
+    return {
+      kpis,
+      timeline: timeline.length > 0 ? timeline : TIMELINE_FALLBACK,
+      live: live.length > 0 ? live : LIVE_FALLBACK,
+      venueName: ctx.selectedVenue.name,
+      drinks: DRINKS_FALLBACK, // sin productos seedeados todavía
+      revenue30d: REVENUE_30D_FALLBACK, // mismo motivo
+      isReal: true,
+    }
+  } catch {
+    return fallback
+  }
+}
+
+export default async function DashboardPage() {
+  const data = await loadDashboard()
+
+  const todayLabel = new Date()
+    .toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: 'short' })
+    .toUpperCase()
+    .replace(/\./g, '')
+
   return (
     <>
       <OwnerHeader
-        eyebrow="VISTA GENERAL · HOY · MAR 22"
+        eyebrow={`VISTA GENERAL · HOY · ${todayLabel}`}
         title={
           <>
             BUENOS DÍAS,
             <br />
-            DIEGO.
+            {data.venueName.toUpperCase()}.
           </>
         }
         right={
@@ -74,10 +164,12 @@ export default function DashboardPage() {
         }
       />
 
-      <KpiGrid kpis={KPIS} />
+      <KpiGrid kpis={data.kpis} />
 
-      {/* Timeline + live col */}
-      <div className="grid border-b-card border-cy-line" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
+      <div
+        className="grid border-b-card border-cy-line"
+        style={{ gridTemplateColumns: '1.4fr 1fr' }}
+      >
         <section className="border-r-card border-cy-line p-7">
           <SectionTitle
             eyebrow="AGENDA DEL DÍA"
@@ -91,13 +183,13 @@ export default function DashboardPage() {
               </Link>
             }
           />
-          <TodayTimeline rows={TIMELINE} />
+          <TodayTimeline rows={data.timeline} />
         </section>
 
         <aside className="flex flex-col gap-5 p-7">
           <div>
-            <SectionTitle eyebrow="AHORA MISMO · 19:42" title="Canchas en vivo" />
-            <LiveCourts courts={LIVE} />
+            <SectionTitle eyebrow="AHORA MISMO" title="Canchas en vivo" />
+            <LiveCourts courts={data.live} />
           </div>
 
           <div>
@@ -116,11 +208,10 @@ export default function DashboardPage() {
         </aside>
       </div>
 
-      {/* Drinks + Revenue */}
       <div className="grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
         <section className="border-r-card border-cy-line p-7">
           <SectionTitle eyebrow="RANKING DEL MES" title="Bebidas más vendidas" />
-          <DrinksRanking rows={DRINKS} maxUnits={284} />
+          <DrinksRanking rows={data.drinks} maxUnits={284} />
         </section>
 
         <section className="p-7">
@@ -135,7 +226,7 @@ export default function DashboardPage() {
           </div>
           <div className="mt-1 h-1 bg-cy-line" />
           <div className="mt-3">
-            <RevenueChart values={REVENUE_30D} highlightLastN={8} />
+            <RevenueChart values={data.revenue30d} highlightLastN={8} />
             <div className="mt-1 flex justify-between">
               <span className="font-mono text-[9px] text-cy-muted">FEB 22</span>
               <span className="font-mono text-[9px] text-cy-muted">HOY</span>

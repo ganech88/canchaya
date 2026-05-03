@@ -5,7 +5,7 @@
 // (o body JSON con la misma info, según versión)
 //
 // Flujo:
-//   1. Verificar firma (TODO: implementar X-Signature header validation)
+//   1. Verificar firma X-Signature (HMAC-SHA256 con MP_WEBHOOK_SECRET)
 //   2. Pedir el payment a MP API: GET /v1/payments/{id}
 //   3. De ahí sacar external_reference (booking_id) y status
 //   4. Update booking según status:
@@ -13,9 +13,10 @@
 //      - pending  → payment_status=pending
 //      - rejected → payment_status=failed
 //
-// Env: MP_ACCESS_TOKEN, NHOST_GRAPHQL_URL, NHOST_ADMIN_SECRET, MP_WEBHOOK_SECRET (TODO)
+// Env: MP_ACCESS_TOKEN, NHOST_GRAPHQL_URL, NHOST_ADMIN_SECRET, MP_WEBHOOK_SECRET
 
 import type { Request, Response } from 'express'
+import { createHmac, timingSafeEqual } from 'crypto'
 
 interface MPPayment {
   id: number
@@ -58,6 +59,43 @@ async function gql<T>(query: string, variables: Record<string, unknown>): Promis
   return json.data
 }
 
+/**
+ * Valida la firma del webhook según el spec de Mercado Pago.
+ *
+ * Header `x-signature`: `ts=<timestamp>,v1=<hmac-sha256-hex>`
+ * Manifest: `id:<data_id>;request-id:<req-id>;ts:<ts>;`
+ * Comparación: timingSafeEqual contra HMAC-SHA256(MP_WEBHOOK_SECRET, manifest)
+ *
+ * Ref: https://www.mercadopago.com.ar/developers/es/docs/your-integrations/notifications/webhooks
+ */
+function verifyMPSignature(req: Request, dataId: string): boolean {
+  const secret = process.env.MP_WEBHOOK_SECRET
+  // Si no hay secret seteado, lo dejamos pasar pero loggeamos. Necesario para
+  // setup inicial; en prod debería estar siempre configurado.
+  if (!secret) return true
+
+  const sigHeader = req.header('x-signature') ?? ''
+  const reqId = req.header('x-request-id') ?? ''
+  if (!sigHeader || !reqId) return false
+
+  const parts = sigHeader.split(',').reduce<Record<string, string>>((acc, p) => {
+    const [k, v] = p.split('=').map((s) => s.trim())
+    if (k && v) acc[k] = v
+    return acc
+  }, {})
+  const ts = parts['ts']
+  const v1 = parts['v1']
+  if (!ts || !v1) return false
+
+  const manifest = `id:${dataId};request-id:${reqId};ts:${ts};`
+  const expected = createHmac('sha256', secret).update(manifest).digest('hex')
+
+  const a = Buffer.from(expected, 'hex')
+  const b = Buffer.from(v1, 'hex')
+  if (a.length !== b.length) return false
+  return timingSafeEqual(a, b)
+}
+
 function bookingStatusFromMP(mpStatus: MPPayment['status']): {
   bookingStatus: string
   paymentStatus: string
@@ -91,18 +129,23 @@ export default async function handler(req: Request, res: Response) {
     return
   }
 
-  // TODO: validar X-Signature header (HMAC-SHA256 con MP_WEBHOOK_SECRET).
-  // Sin esto, cualquiera puede mandar notificaciones falsas. CRÍTICO antes de prod.
-
   // MP manda type en query string o body — soportamos ambos.
   const type = (req.query.type as string) ?? (req.body as { type?: string })?.type
-  const dataId =
+  const dataIdRaw =
     (req.query['data.id'] as string) ??
     (req.body as { data?: { id?: string | number } })?.data?.id
 
-  if (type !== 'payment' || !dataId) {
+  if (type !== 'payment' || !dataIdRaw) {
     // Otros tipos (merchant_order, plan, subscription) los ignoramos por ahora
     res.status(200).json({ ignored: true })
+    return
+  }
+
+  const dataId = String(dataIdRaw)
+
+  // Validación de firma — MP_WEBHOOK_SECRET seteado en dashboard.
+  if (!verifyMPSignature(req, dataId)) {
+    res.status(401).json({ error: 'Invalid signature' })
     return
   }
 

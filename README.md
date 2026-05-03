@@ -57,6 +57,19 @@ Para ver el schema o aplicar cambios:
 
 > Postgis no está disponible en free tier (requiere superuser). Por ahora `venues.location` se modeló como `latitude`/`longitude` numeric. Re-habilitar al upgrade.
 
+### Codegen GraphQL
+
+Los types del schema y de cada query se generan introspeccionando el endpoint Hasura:
+
+```bash
+# Setear admin secret + endpoint en packages/db/.env (ver .env.example)
+cd packages/db
+pnpm codegen          # one-off
+pnpm codegen:watch    # watch mode
+```
+
+Output: `packages/db/src/__generated__/{schema,operations}.ts`. Los re-exporta `index.ts`, así que `import { ... } from '@canchaya/db'` ya los ve. Por ahora los types manuales de `src/types.ts` siguen siendo la fuente de verdad — el codegen los complementa con tipos exactos por operación.
+
 ## Stack de decisiones clave
 
 - **NativeWind v4** para compartir el vocabulario de Tailwind entre web y RN.

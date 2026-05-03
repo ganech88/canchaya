@@ -100,6 +100,9 @@ export default async function handler(req: Request, res: Response) {
 
   const accessToken = process.env.MP_ACCESS_TOKEN
   const appUrl = process.env.APP_URL ?? 'https://canchaya.vercel.app'
+  // URL pública de las Nhost Functions; cambia según subdomain/region.
+  // Ejemplo: https://<subdomain>.functions.<region>.nhost.run
+  const functionsUrl = process.env.NHOST_FUNCTIONS_URL ?? appUrl
   if (!accessToken) {
     res.status(500).json({ error: 'MP_ACCESS_TOKEN no configurada' })
     return
@@ -138,7 +141,7 @@ export default async function handler(req: Request, res: Response) {
       },
     ],
     external_reference: booking.id,
-    notification_url: `${appUrl.replace(/\/$/, '')}/api/mp-webhook`,
+    notification_url: `${functionsUrl.replace(/\/$/, '')}/v1/mpWebhook`,
     back_urls: {
       success: `${appUrl}/bookings/${booking.id}?status=success`,
       pending: `${appUrl}/bookings/${booking.id}?status=pending`,

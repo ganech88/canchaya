@@ -95,7 +95,7 @@ export default function Search() {
               key={court.id}
               court={court}
               showBorder={i < results.length - 1}
-              onPress={() => router.push(`/court/${court.id}` as never)}
+              onPress={() => router.push(`/court/${court.slug}` as never)}
             />
           ))}
         </View>

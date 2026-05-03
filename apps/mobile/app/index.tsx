@@ -69,7 +69,7 @@ export default function Home() {
         <View className="px-4 pb-3.5">
           <FeaturedCard
             court={featured}
-            onPress={() => router.push(`/court/${featured.id}` as never)}
+            onPress={() => router.push(`/court/${featured.slug}` as never)}
           />
         </View>
 
@@ -99,7 +99,7 @@ export default function Home() {
                 key={court.id}
                 court={court}
                 showBorder={i < nearby.length - 1}
-                onPress={() => router.push(`/court/${court.id}` as never)}
+                onPress={() => router.push(`/court/${court.slug}` as never)}
               />
             ))}
           </View>

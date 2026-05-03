@@ -28,6 +28,7 @@ export function venuesToMobileCourts(venues: VenueListItem[]): MockCourt[] {
     const sportCode = cheapestCourt?.sport.code ?? ''
     return {
       id: i + 1,
+      slug: v.slug,
       name: v.name.toUpperCase(),
       zone: v.city ? `${v.city} · 0km` : 'Sin ubicación',
       type: SPORT_LABELS[sportCode] ?? cheapestCourt?.sport.name ?? '—',

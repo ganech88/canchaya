@@ -14,13 +14,19 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "echo 'no lint yet'",
-    "clean": "rm -rf .turbo dist"
+    "clean": "rm -rf .turbo dist src/__generated__",
+    "codegen": "graphql-codegen --config codegen.ts",
+    "codegen:watch": "graphql-codegen --config codegen.ts --watch"
   },
   "dependencies": {
     "@nhost/nhost-js": "^4.7.0"
   },
   "devDependencies": {
     "@canchaya/config": "workspace:*",
+    "@graphql-codegen/cli": "^5.0.3",
+    "@graphql-codegen/typescript": "^4.1.0",
+    "@graphql-codegen/typescript-operations": "^4.3.0",
+    "graphql": "^16.9.0",
     "typescript": "^5.6.2"
   }
 }

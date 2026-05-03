@@ -5,6 +5,9 @@ import type { PlaceholderVariant } from '@canchaya/ui/native'
 
 export interface MockCourt {
   id: number
+  // Slug del venue. Para navegación: `/court/${slug}`. El detail lo usa como
+  // lookup contra `fetchVenueBySlug` y cae a mocks si Nhost no responde.
+  slug: string
   name: string
   zone: string
   type: string
@@ -19,6 +22,7 @@ export interface MockCourt {
 export const MOCK_COURTS: MockCourt[] = [
   {
     id: 1,
+    slug: 'la-bombonerita',
     name: 'LA BOMBONERITA',
     zone: 'Palermo · 1.2km',
     type: 'Fútbol 5',
@@ -31,6 +35,7 @@ export const MOCK_COURTS: MockCourt[] = [
   },
   {
     id: 2,
+    slug: 'padel-club-sur',
     name: 'PÁDEL CLUB SUR',
     zone: 'Caballito · 2.4km',
     type: 'Pádel',
@@ -43,6 +48,7 @@ export const MOCK_COURTS: MockCourt[] = [
   },
   {
     id: 3,
+    slug: 'el-potrero',
     name: 'EL POTRERO',
     zone: 'Villa Crespo · 0.8km',
     type: 'Fútbol 8',
@@ -55,6 +61,7 @@ export const MOCK_COURTS: MockCourt[] = [
   },
   {
     id: 4,
+    slug: 'roja-court',
     name: 'ROJA COURT',
     zone: 'Belgrano · 3.1km',
     type: 'Pádel',

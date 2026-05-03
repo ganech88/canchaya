@@ -1,12 +1,13 @@
-'use client'
-
-import { useState } from 'react'
-import { Button, Chip } from '@canchaya/ui/web'
+import { fetchOwnerCourts } from '@canchaya/db'
+import { Button } from '@canchaya/ui/web'
 import { Icon } from '@canchaya/ui/icons'
 import { OwnerHeader } from '@/components/owner/OwnerHeader'
-import { CourtManageCard, type OwnerCourt } from '@/components/owner/CourtManageCard'
+import { CourtsTabs } from '@/components/owner/CourtsTabs'
+import type { OwnerCourt } from '@/components/owner/CourtManageCard'
+import { getOwnerContext } from '@/lib/nhost/owner'
+import { courtsToManageRows } from '@/lib/owner-adapters'
 
-const COURTS: OwnerCourt[] = [
+const FALLBACK_COURTS: OwnerCourt[] = [
   { number: 1, name: 'C1 · Fútbol 5', surface: 'Sintético', covered: true, price: 18000, status: 'ACTIVA', occupancyPct: 92, imgVariant: 'field' },
   { number: 2, name: 'C2 · Fútbol 5', surface: 'Sintético', covered: true, price: 18000, status: 'ACTIVA', occupancyPct: 88, imgVariant: 'field' },
   { number: 3, name: 'C3 · Fútbol 5', surface: 'Sintético', covered: false, price: 16000, status: 'ACTIVA', occupancyPct: 74, imgVariant: 'field' },
@@ -15,15 +16,28 @@ const COURTS: OwnerCourt[] = [
   { number: 6, name: 'P2 · Pádel', surface: 'Cemento', covered: true, price: 9500, status: 'MANTENIMIENTO', occupancyPct: 0, imgVariant: 'dark' },
 ]
 
-const TABS = ['TODAS (6)', 'FÚTBOL (4)', 'PÁDEL (2)', 'TENIS (0)', 'INACTIVAS (1)'] as const
+async function loadCourts(): Promise<{ rows: OwnerCourt[]; venueName: string }> {
+  const ctx = await getOwnerContext()
+  if (!ctx) return { rows: FALLBACK_COURTS, venueName: 'La Bombonerita' }
+  try {
+    const weekStart = new Date()
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+    weekStart.setHours(0, 0, 0, 0)
+    const courts = await fetchOwnerCourts(ctx.client, ctx.selectedVenue.id, weekStart)
+    if (courts.length === 0) return { rows: FALLBACK_COURTS, venueName: ctx.selectedVenue.name }
+    return { rows: courtsToManageRows(courts), venueName: ctx.selectedVenue.name }
+  } catch {
+    return { rows: FALLBACK_COURTS, venueName: ctx.selectedVenue.name }
+  }
+}
 
-export default function CourtsPage() {
-  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>(TABS[0])
+export default async function CourtsPage() {
+  const { rows, venueName } = await loadCourts()
 
   return (
     <>
       <OwnerHeader
-        eyebrow="INVENTARIO · 6 CANCHAS"
+        eyebrow={`INVENTARIO · ${rows.length} CANCHA${rows.length === 1 ? '' : 'S'} · ${venueName.toUpperCase()}`}
         title="CANCHAS."
         right={
           <Button
@@ -36,21 +50,7 @@ export default function CourtsPage() {
         }
       />
 
-      {/* Tabs */}
-      <div className="flex gap-1.5 border-b-chip border-cy-line bg-cy-paper px-7 py-3">
-        {TABS.map((t) => (
-          <button key={t} type="button" onClick={() => setActiveTab(t)}>
-            <Chip variant={t === activeTab ? 'fill' : 'outline'}>{t}</Chip>
-          </button>
-        ))}
-      </div>
-
-      {/* Grid */}
-      <div className="grid gap-[18px] p-7" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        {COURTS.map((c) => (
-          <CourtManageCard key={c.number} court={c} />
-        ))}
-      </div>
+      <CourtsTabs courts={rows} />
     </>
   )
 }
